@@ -1,0 +1,25 @@
+[
+  {
+    "file": "results/offair/recordings/entrysat.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/entrysat.wav",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "BPSK",
+      "symbol_rate_hz": 9600
+    }
+  },
+  {
+    "file": "results/offair/recordings/astrobio_telemetry.iq",
+    "license": "CC-BY-4.0, Daniel Estévez",
+    "source": "https://zenodo.org/records/6907821/files/ASTROBIO_2022-07-24T19_25_49.sigmf-data",
+    "sample_rate": 40000,
+    "datatype": "int16",
+    "expect": {
+      "sample_rate_hz": 40000,
+      "modulation": "2FSK"
+    }
+  }
+]
