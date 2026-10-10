@@ -35,7 +35,9 @@ logging.disable(logging.INFO)
 
 from dhwani.common.config import load_config
 from dhwani.pipeline import Analyzer
+import provenance
 from provenance import write_result
+
 
 
 def observed(res) -> dict:
@@ -95,9 +97,14 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--manifest",
                     default=os.path.join(ROOT, "data", "offair", "manifest.json"))
+    ap.add_argument("--out-dir", default=None,
+                    help="directory to write offair_report.json (default results)")
     ap.add_argument("--ml", action="store_true",
                     help="enable CVNet-RF (may download the checkpoint)")
     args = ap.parse_args(argv)
+    if args.out_dir is not None:
+        out = args.out_dir if os.path.isabs(args.out_dir) else os.path.join(ROOT, args.out_dir)
+        provenance.RESULTS = os.path.abspath(out)
     if not os.path.exists(args.manifest):
         print(f"no manifest at {args.manifest}; see this script's docstring")
         return 1

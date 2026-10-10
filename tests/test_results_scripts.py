@@ -236,3 +236,32 @@ def test_demo_wav_matches_its_seed(tmp_path):
     a, b = read(fresh), read(mdr.WAV)
     assert a.shape == b.shape
     assert np.abs(a.astype(int) - b).max() <= 1
+
+
+def test_validate_offair_out_dir(tmp_path, monkeypatch):
+    """--out-dir directs offair_report.json to the specified folder."""
+    import validate_offair as vo
+    monkeypatch.setattr(provenance, "RESULTS", provenance.RESULTS)
+    monkeypatch.setattr(vo, "ROOT", str(tmp_path))
+    (tmp_path / "m.json").write_text("[]")
+    custom_out = tmp_path / "custom_results"
+    assert vo.main(["--manifest", str(tmp_path / "m.json"), "--out-dir", str(custom_out)]) == 0
+    assert (custom_out / "offair_report.json").exists()
+
+
+def test_readme_loads_offair_report_from_offair_dir(tmp_path, monkeypatch):
+    """render_readme._load reads results/offair/offair_report.json first,
+    falling back to results/offair_report.json."""
+    import render_readme as rr
+    monkeypatch.setattr(rr, "ROOT", str(tmp_path))
+    res = tmp_path / "results"
+    res_offair = res / "offair"
+    res_offair.mkdir(parents=True)
+
+    # 1. Fallback when only results/offair_report.json exists
+    (res / "offair_report.json").write_text(json.dumps({"source": "fallback"}))
+    assert rr._load("offair_report") == {"source": "fallback"}
+
+    # 2. Priority: results/offair/offair_report.json takes precedence
+    (res_offair / "offair_report.json").write_text(json.dumps({"source": "offair_dir"}))
+    assert rr._load("offair_report") == {"source": "offair_dir"}
