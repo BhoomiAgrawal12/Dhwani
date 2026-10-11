@@ -220,6 +220,37 @@ def test_offair_scores_sample_rate_applied_or_candidate():
     assert not vo.score(e, Stub(None, [96000]), True)["all_correct"]
 
 
+def test_offair_scoring_rules_from_first_real_run():
+    """First off-air run: mono WAVs were scored at the analysis rate fs/2
+    (24 kHz) against the file's 48 kHz; rates the manifest itself supplied
+    were counted as identified (6/10); 'nothing to detect' had no key."""
+    import validate_offair as vo
+    from dhwani.common.models import AnalysisResult, SignalParameters
+
+    class Stub:
+        def __init__(self, **meta):
+            self.meta, self.segments = meta, meta.pop("segments", [])
+
+        def analyze(self, *a, **k):
+            r = AnalysisResult(recording_meta=dict(self.meta))
+            r.parameters, r.segments = SignalParameters(), self.segments
+            return r
+
+    e = {"file": "x.wav", "license": "test",
+         "expect": {"sample_rate_hz": 48000}}
+    mono = Stub(sample_rate=24000.0, sample_rate_source="wav_header",
+                format="wav", channels=1)
+    assert vo.score(e, mono, True)["checks"] == {"sample_rate_hz": True}
+    given = vo.score(e, Stub(sample_rate=48000.0, sample_rate_source="user"),
+                     True)
+    assert given["checks"] == {} and given["given"] == ["sample_rate_hz"]
+    assert not given["all_correct"]          # nothing was actually scored
+    quiet = {"file": "n.iq", "license": "test", "expect": {"signal": False}}
+    assert vo.score(quiet, Stub(sample_rate_source="user"), True)["all_correct"]
+    assert not vo.score(quiet, Stub(sample_rate_source="user",
+                                    segments=["seg"]), True)["all_correct"]
+
+
 def test_demo_wav_matches_its_seed(tmp_path):
     """The committed examples/demo_chain.wav is what make_demo_report.py
     regenerates (within 1 LSB), so the demo cannot drift from the code."""
