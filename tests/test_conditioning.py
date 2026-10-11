@@ -118,6 +118,20 @@ def test_gate_never_calls_wrong_bits_good(config):
         assert any("ambiguous" in w for w in r.warnings)
 
 
+def test_gmsk_gate_does_not_pass_noise(config, rng):
+    """Noise demodulated as GMSK was gated GOOD, because a noise
+    discriminator output is large and the gate only had a floor.
+    Clean GMSK sits near 1x the theoretical deviation; noise far above."""
+    from dhwani.demod import demodulate
+    from dhwani.synth.factory import WaveformFactory
+    w = (rng.standard_normal(1 << 17) + 1j * rng.standard_normal(1 << 17))
+    for sps in (4, 8, 28):
+        assert demodulate(w, "GMSK", sps, config.demod).demodulation_status \
+            == "FAILED"
+    iq, _ = WaveformFactory(seed=2).generate("GMSK", sps=8, snr_db=20)
+    assert demodulate(iq, "GMSK", 8, config.demod).demodulation_status == "GOOD"
+
+
 def _late_burst_file(tmp_path, rng, start=5_000_000, n=6_000_000):
     from dhwani.synth.factory import WaveformFactory
     iq, _ = WaveformFactory(seed=4).generate(
