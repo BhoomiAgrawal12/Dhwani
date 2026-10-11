@@ -428,6 +428,7 @@ function detectSignals(wf, thresholdDb) {
     }
   }
   const out = [];
+  let zMax = -Infinity;
   for (const s of segs) {
     const nF = s.cHi - s.cLo + 1, nT = s.rHi - s.rLo + 1;
     if (nF < 3 || nT < 2) continue;
@@ -437,6 +438,8 @@ function detectSignals(wf, thresholdDb) {
     const sigLin = s.powSum / s.count;
     const snr = 10 * Math.log10(Math.max(sigLin - nfLin, 1e-20) / nfLin);
     if (snr < 1) continue;
+    /* significance as in cfar.py: excess over the noise mean (median/ln2) in std errors */
+    zMax = Math.max(zMax, (sigLin * Math.LN2 / nfLin - 1) * Math.sqrt(s.count));
     out.push({
       fLow: wf.freqs[s.cLo], fHigh: wf.freqs[Math.min(s.cHi + 1, wf.nfft - 1)],
       center: 0.5 * (wf.freqs[s.cLo] + wf.freqs[Math.min(s.cHi + 1, wf.nfft - 1)]),
@@ -448,6 +451,7 @@ function detectSignals(wf, thresholdDb) {
       confidence: +Math.min(1, snr / 20).toFixed(2),
     });
   }
+  if (zMax < 25) return [];   /* only noise clumps: no signal */
   out.sort((a, b) => b.snrDb - a.snrDb);
   return out.slice(0, 32).map((s, i) => ({ id: i, ...s }));
 }
