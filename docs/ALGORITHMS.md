@@ -15,7 +15,11 @@ under `src/dhwani/`.
 - **Mono WAV** (`wav.real_to_complex`): multiply by exp(-j*pi*n/2) to
   move 0..fs/2 around DC, 63-tap Hamming half-band low-pass
   (`firwin(63, 0.5)`), keep every second sample. The JS engine uses the
-  same filter (`realToComplex`, matched to 6e-8).
+  same filter (`realToComplex`, matched to 6e-8). Exception: when the
+  lowest 1% of the power lies below fs/100 (`wav.is_baseband`, JS
+  `isBaseband`), the file is baseband audio, e.g. an FM receiver's output.
+  It stays real at the file rate, and S3 does not trim it by power (FM
+  quieting makes the hiss louder than the signal).
 
 ## S1 conditioning (`conditioning/conditioner.py`)
 
