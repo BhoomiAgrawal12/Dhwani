@@ -1,0 +1,89 @@
+{
+  "provenance": {
+    "generated_utc": "2026-10-11T15:15:56Z",
+    "command": "validate_offair.py --manifest results/offair/manifest.json --out-dir results/offair",
+    "git_commit": "4c383fa",
+    "git_dirty": false,
+    "cpu": "x86_64",
+    "platform": "Linux-7.1.1-76070101-generic-x86_64-with-glibc2.35",
+    "python": "3.12.13",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "data": "off-air (licensed recordings, see cases)"
+  },
+  "settings": {
+    "manifest": "results/offair/manifest.json",
+    "cvnet": false
+  },
+  "summary": {
+    "recordings": 2,
+    "all_correct": 0,
+    "per_parameter": {
+      "modulation": {
+        "n": 2,
+        "correct": 0
+      },
+      "sample_rate_hz": {
+        "n": 2,
+        "correct": 1
+      },
+      "symbol_rate_hz": {
+        "n": 1,
+        "correct": 1
+      }
+    }
+  },
+  "cases": [
+    {
+      "file": "results/offair/recordings/entrysat.wav",
+      "license": "The Unlicense, Daniel Est\u00e9vez",
+      "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/entrysat.wav",
+      "expected": {
+        "sample_rate_hz": 48000,
+        "modulation": "BPSK",
+        "symbol_rate_hz": 9600
+      },
+      "observed": {
+        "sample_rate_hz": 24000.0,
+        "modulation": "UNKNOWN",
+        "symbol_rate_hz": 9570.258728962574
+      },
+      "sample_rate_source": "wav_header",
+      "checks": {
+        "sample_rate_hz": false,
+        "modulation": false,
+        "symbol_rate_hz": true
+      },
+      "all_correct": false,
+      "warnings": [
+        "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4",
+        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+      ],
+      "elapsed_s": 45.9
+    },
+    {
+      "file": "results/offair/recordings/astrobio_telemetry.iq",
+      "license": "CC-BY-4.0, Daniel Est\u00e9vez",
+      "source": "https://zenodo.org/records/6907821/files/ASTROBIO_2022-07-24T19_25_49.sigmf-data",
+      "expected": {
+        "sample_rate_hz": 40000,
+        "modulation": "2FSK"
+      },
+      "observed": {
+        "sample_rate_hz": 40000,
+        "modulation": "UNKNOWN"
+      },
+      "sample_rate_source": "user",
+      "checks": {
+        "sample_rate_hz": true,
+        "modulation": false
+      },
+      "all_correct": false,
+      "warnings": [
+        "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
+        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+      ],
+      "elapsed_s": 4.5
+    }
+  ]
+}
