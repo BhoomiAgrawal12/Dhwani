@@ -106,12 +106,17 @@ def load_recording(path: str, sample_rate: float = None,
 
     if ext == ".wav":
         meta = read_wav(path)
-        samples, is_real = wav_to_complex(meta)
+        samples, kind = wav_to_complex(meta)
         sr = sample_rate or meta["sample_rate"]
         cf = center_frequency or meta.get("center_frequency")
         cf_source = ("user" if center_frequency else
                      "auxi_chunk" if meta.get("center_frequency") else "unknown")
-        if is_real:
+        if kind == "baseband":
+            warnings.append("single-channel WAV holds baseband audio (its "
+                            "band starts at DC, e.g. an FM receiver's "
+                            "output): analysed as a real signal at the file "
+                            "rate; FSK, GFSK and GMSK look alike as audio")
+        if kind == "real":
             # real_to_complex halved the rate and centred the 0..fs/2 band
             sr /= 2
             cf = (cf or 0.0) + sr / 2
@@ -125,6 +130,7 @@ def load_recording(path: str, sample_rate: float = None,
             file_path=path, format="wav", samples=samples,
             sample_rate=sr,
             sample_rate_source="user" if sample_rate else "wav_header",
+            file_sample_rate=meta["sample_rate"],
             center_frequency=cf, center_frequency_source=cf_source,
             datatype=meta.get("datatype", ""), endianness="little",
             channels=meta.get("channels", 1),

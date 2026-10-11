@@ -219,6 +219,35 @@ function parseWav(buffer) {
   return { meta, I, Q };
 }
 
+/* Real input whose band starts at DC (an FM receiver's audio): the lowest
+ * 1% of its power lies below fs/100. Same test as is_baseband in
+ * ingestion/wav.py (Welch PSD, 4096-point Hann segments, 50% overlap). */
+function isBaseband(x) {
+  const len = Math.min(x.length, 1 << 20);
+  let n = 4096;
+  while (n > len) n >>= 1;
+  if (n < 16) return false;
+  const w = new Float64Array(n), p = new Float64Array(n / 2 + 1);
+  for (let k = 0; k < n; k++) w[k] = 0.5 - 0.5 * Math.cos(2 * Math.PI * k / n);
+  for (let s = 0; s + n <= len; s += n / 2) {
+    let mean = 0;
+    for (let k = 0; k < n; k++) mean += x[s + k];
+    mean /= n;
+    const re = new Float64Array(n), im = new Float64Array(n);
+    for (let k = 0; k < n; k++) re[k] = (x[s + k] - mean) * w[k];
+    fftRadix2(re, im, false);
+    for (let k = 0; k <= n / 2; k++) p[k] += re[k] * re[k] + im[k] * im[k];
+  }
+  let total = 0;
+  for (let k = 0; k <= n / 2; k++) total += p[k];
+  let c = 0;
+  for (let k = 0; k <= n / 2; k++) {
+    c += p[k];
+    if (c >= 0.01 * total) return k / n < 0.01;
+  }
+  return false;
+}
+
 /* Real (mono) input at fs -> complex baseband at fs/2: mix by -fs/4,
  * 63-tap Hamming half-band low-pass, decimate by 2. Same filter as
  * real_to_complex in ingestion/wav.py (scipy firwin(63, 0.5)). */
@@ -262,7 +291,11 @@ function ingest(buffer, fileName, overrides) {
     report.centerFrequency = overrides.centerFrequency ||
       wav.meta.centerFrequency || null;
     report.channels = wav.meta.channels;
-    if (wav.meta.isReal) {
+    if (wav.meta.isReal && isBaseband(I)) {
+      report.warnings.push("single-channel WAV holds baseband audio (its " +
+        "band starts at DC, e.g. an FM receiver's output): analysed as a " +
+        "real signal at the file rate; FSK, GFSK and GMSK look alike as audio");
+    } else if (wav.meta.isReal) {
       ({ I, Q } = realToComplex(I));
       report.sampleRate /= 2;
       report.centerFrequency = (report.centerFrequency || 0) + report.sampleRate / 2;
@@ -1049,7 +1082,7 @@ function analyzeRecording(buffer, fileName, overrides, progressCb) {
 
 /* node export for the test harness */
 if (typeof module !== "undefined") {
-  module.exports = { analyzeRecording, sniffRawIQ, parseWav, ingest, realToComplex,
+  module.exports = { analyzeRecording, sniffRawIQ, parseWav, ingest, realToComplex, isBaseband,
                      computeWaterfall, detectSignals, channelize,
                      symbolRate, fskTones, classifyModulation, m2m4Snr,
                      occupiedBandwidth, envelopeCv };

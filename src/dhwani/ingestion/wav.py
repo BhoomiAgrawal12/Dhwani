@@ -102,14 +102,31 @@ def read_wav(path: str) -> dict:
 def wav_to_complex(meta: dict) -> tuple:
     """Convert WAV channel data to complex64 baseband.
 
-    2 channels -> I + jQ.  1 channel -> real_to_complex (rate halves, centre
-    moves to fs/4; the caller adjusts the metadata). Returns (samples, is_real)."""
+    2 channels -> I + jQ ("iq").  1 channel: baseband audio (energy from
+    DC, e.g. an FM receiver's output) stays real at the file rate
+    ("baseband"); anything else -> real_to_complex (rate halves, centre
+    moves to fs/4; the caller adjusts the metadata) ("real").
+    Returns (samples, kind)."""
     raw = meta["raw"]
     if raw.ndim == 2 and raw.shape[1] >= 2:
         i = _norm(raw[:, 0])
         q = _norm(raw[:, 1])
-        return (i + 1j * q).astype(np.complex64), False
-    return real_to_complex(_norm(raw.ravel())), True
+        return (i + 1j * q).astype(np.complex64), "iq"
+    x = _norm(raw.ravel())
+    if is_baseband(x):
+        return x.astype(np.complex64), "baseband"
+    return real_to_complex(x), "real"
+
+
+def is_baseband(x: np.ndarray) -> bool:
+    """Real signal whose band starts at DC: the lowest 1% of its power lies
+    below fs/100. A data waveform out of an FM discriminator does; an RF or
+    audio-tone carrier (SSB-received PSK, AFSK, the IF tests) does not."""
+    from scipy.signal import welch
+    x = x[: 1 << 20]
+    f, p = welch(x - x.mean(), nperseg=min(4096, len(x)))
+    c = np.cumsum(p) / (p.sum() + 1e-30)
+    return bool(f[np.searchsorted(c, 0.01)] < 0.01)
 
 
 def real_to_complex(x: np.ndarray) -> np.ndarray:
