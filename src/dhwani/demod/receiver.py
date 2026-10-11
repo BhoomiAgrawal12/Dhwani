@@ -874,9 +874,14 @@ def _demod_gmsk(x, sps, res):
     res.lock_metrics["discriminator_margin"] = round(margin, 3)
     res.demodulation_status = ("GOOD" if margin > 0.7 else
                                "DEGRADED" if margin > 0.4 else "FAILED")
+    # clean GMSK sits at 0.75-1.05x the deviation; noise drives the
+    # discriminator far past it (white noise 2.7-7x, BER 0.24 at 1.3x)
+    if margin > 1.25:
+        res.demodulation_status = "FAILED"
+        res.timing_locked = res.carrier_locked = False
     if res.demodulation_status == "FAILED":
-        res.warnings.append("GMSK discriminator margin too low: bit stream "
-                            "withheld")
+        res.warnings.append("GMSK discriminator margin outside 0.4-1.25 "
+                            "(weak or noise-dominated): bit stream withheld")
     return res
 
 
