@@ -132,6 +132,21 @@ def test_gmsk_gate_does_not_pass_noise(config, rng):
     assert demodulate(iq, "GMSK", 8, config.demod).demodulation_status == "GOOD"
 
 
+def test_trim_drops_noise_lead_in_of_a_weak_burst(rng):
+    """Off-air (EntrySat): the detector's time box opened 0.37 s before a
+    burst with ~6 dB in-channel SNR; the noise lead-in sat right at the old
+    -6 dB trim threshold, so 27% of the 'symbols' were noise and EVM read
+    46.6% (FAILED) though the burst itself was at ~20% (GOOD)."""
+    from dhwani.channelization.channelizer import _trim_burst
+    n0, n1 = 30000, 80000
+    noise = (rng.standard_normal(n0 + n1) + 1j * rng.standard_normal(n0 + n1))
+    sym = np.sign(rng.standard_normal(n1 // 8 + 1)).repeat(8)[:n1]
+    s = noise / np.sqrt(2)
+    s[n0:] += 1.78 * sym                   # SNR 5 dB: a 6.2 dB step, as EntrySat
+    _, (a, b) = _trim_burst(s.astype(np.complex64))
+    assert abs(a - n0) < 0.02 * n0 and b > n0 + 0.98 * n1
+
+
 def _late_burst_file(tmp_path, rng, start=5_000_000, n=6_000_000):
     from dhwani.synth.factory import WaveformFactory
     iq, _ = WaveformFactory(seed=4).generate(
