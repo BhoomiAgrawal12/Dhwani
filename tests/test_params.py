@@ -12,6 +12,14 @@ def test_sample_rate_candidates_table():
     assert sample_rate_candidates(0.1234567) == []
 
 
+def test_channelised_rates_are_candidates():
+    """Off-air: SatNOGS/Zenodo captures are often channelised to 32 or
+    40 kHz (AstroBio is 40 kHz); neither was in the table."""
+    hz = lambda c: [x["sample_rate_hz"] for x in c]
+    assert 40e3 in hz(sample_rate_candidates(2400 / 40e3))
+    assert 32e3 in hz(sample_rate_candidates(1200 / 32e3))
+
+
 def test_headerless_iq_gets_candidates_not_a_rate(tmp_path, config):
     """3.D: a 9600 Bd burst recorded at 48 kHz, written without metadata."""
     iq, _ = WaveformFactory(seed=4).generate(modulation="QPSK", sps=5.0,
