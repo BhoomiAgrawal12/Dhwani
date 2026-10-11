@@ -315,8 +315,9 @@ def ofdm_detect(x: np.ndarray, fft_sizes=(64, 128, 256, 512, 1024, 2048)) -> dic
 
 # --------------------------------------------------------------------------
 # ponytail: small fixed tables, extend when an off-air capture misses
-SDR_SAMPLE_RATES = (48e3, 96e3, 192e3, 250e3, 1e6, 1.024e6, 1.2e6, 1.92e6,
-                    2e6, 2.048e6, 2.4e6, 2.56e6, 3.2e6, 8e6, 10e6, 20e6)
+SDR_SAMPLE_RATES = (32e3, 40e3, 48e3, 96e3, 192e3, 250e3, 1e6, 1.024e6,
+                    1.2e6, 1.92e6, 2e6, 2.048e6, 2.4e6, 2.56e6, 3.2e6, 8e6,
+                    10e6, 20e6)
 STANDARD_SYMBOL_RATES = (300, 600, 1200, 2400, 4800, 9600, 19200, 38400,
                          57600, 76800, 115200, 50e3, 100e3, 125e3, 250e3,
                          270833, 500e3, 1e6)
