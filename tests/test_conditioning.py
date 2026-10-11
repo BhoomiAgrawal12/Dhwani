@@ -147,6 +147,20 @@ def test_trim_drops_noise_lead_in_of_a_weak_burst(rng):
     assert abs(a - n0) < 0.02 * n0 and b > n0 + 0.98 * n1
 
 
+def test_trim_keeps_one_burst_of_two(rng):
+    """Off-air (EntrySat): one detection box held two packets at different
+    carriers with 0.56 s of noise between; the trim kept first..last, so
+    the carrier loop could not lock either. The strongest burst is kept."""
+    from dhwani.channelization.channelizer import _trim_burst
+    n = 200000
+    s = (rng.standard_normal(n) + 1j * rng.standard_normal(n)) / np.sqrt(2)
+    k = np.arange(n)
+    s[10000:90000] += 3.0 * np.exp(2j * np.pi * 0.01 * k[10000:90000])
+    s[140000:190000] += 2.0 * np.exp(2j * np.pi * 0.03 * k[140000:190000])
+    _, (a, b) = _trim_burst(s.astype(np.complex64))
+    assert abs(a - 10000) < 1000 and abs(b - 90000) < 1000
+
+
 def _late_burst_file(tmp_path, rng, start=5_000_000, n=6_000_000):
     from dhwani.synth.factory import WaveformFactory
     iq, _ = WaveformFactory(seed=4).generate(
