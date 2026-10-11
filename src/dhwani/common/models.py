@@ -77,6 +77,7 @@ class Recording:
     sample_rate: Optional[float]       # Hz; None => unknown (headerless raw)
     sample_rate_source: str = "unknown"  # "wav_header" | "sigmf" | "user" | "unknown"
     file_sample_rate: Optional[float] = None  # WAV header rate (a mono IF WAV is analysed at half)
+    baseband_audio: bool = False       # mono WAV whose band starts at DC (FM-receiver audio)
     center_frequency: Optional[float] = None
     center_frequency_source: str = "unknown"
     datatype: str = ""                 # source storage dtype, e.g. "int16"
@@ -103,6 +104,7 @@ class Recording:
             "sample_rate": self.sample_rate,
             "sample_rate_source": self.sample_rate_source,
             "file_sample_rate": self.file_sample_rate,
+            "baseband_audio": self.baseband_audio,
             "center_frequency": self.center_frequency,
             "center_frequency_source": self.center_frequency_source,
             "datatype": self.datatype, "endianness": self.endianness,

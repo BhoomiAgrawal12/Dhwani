@@ -209,7 +209,9 @@ class Analyzer:
 
         # ---------------- S3 channelize --------------------------------
         with timer.stage("S3_channelize"):
-            ch = channelize(x, seg)
+            # FM-receiver audio is louder in hiss than with a carrier (FM
+            # quieting): its envelope cannot locate the burst
+            ch = channelize(x, seg, trim=not rec.baseband_audio)
             base = ch["samples"]
             trace.mark("S3", "executed",
                        f"signal {sel}: shifted {seg.center_norm:+.4f}, "
