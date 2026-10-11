@@ -18,8 +18,8 @@
     "sample_rate": 40000,
     "datatype": "int16",
     "expect": {
-      "sample_rate_hz": 40000,
-      "modulation": "2FSK"
-    }
+      "signal": false
+    },
+    "note": "Zenodo record: AstroBio signals were not detected"
   }
 ]
