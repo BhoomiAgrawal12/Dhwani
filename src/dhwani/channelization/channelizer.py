@@ -11,7 +11,7 @@ from scipy import signal as sig
 
 
 def channelize(x: np.ndarray, segment, target_oversample: float = 8.0,
-               max_samples: int = 1 << 23) -> dict:
+               max_samples: int = 1 << 23, trim: bool = True) -> dict:
     """Extract `segment` from wideband stream `x`.
 
     Returns dict with baseband samples plus a record of every operation so
@@ -37,9 +37,9 @@ def channelize(x: np.ndarray, segment, target_oversample: float = 8.0,
     # trim leading/trailing noise: the detector's time resolution is one
     # waterfall row, so the box usually includes noise-only padding that
     # would poison EVM and bit alignment downstream
-    s, trim = _trim_burst(s)
+    s, kept = _trim_burst(s) if trim else (s, (0, len(s)))
 
-    return {"samples": s, "trimmed": trim,
+    return {"samples": s, "trimmed": kept,
             "freq_shift_norm": fc,
             "resample_up": up, "resample_down": down,
             "rate_ratio": new_rate_norm,
@@ -59,8 +59,10 @@ def _trim_burst(s: np.ndarray, margin: int = 32) -> tuple:
     sm = np.convolve(p, k, mode="same")
     hi = np.median(sm[sm > np.median(sm)])
     # halfway (in dB) between the noise floor and the burst, never below
-    # -6 dB: a weak burst's noise lead-in sits near -6 dB and was kept
-    thr = max(0.25 * hi, np.sqrt(np.percentile(sm, 10) * hi))
+    # -6 dB: a weak burst's noise lead-in sits near -6 dB and was kept.
+    # Only with real contrast: a flat envelope would split on its wiggles.
+    lo = np.percentile(sm, 10)
+    thr = max(0.25 * hi, np.sqrt(lo * hi)) if hi > 2 * lo else 0.25 * hi
     on = np.r_[False, sm > thr, False]
     st = np.flatnonzero(~on[:-1] & on[1:])
     en = np.flatnonzero(on[:-1] & ~on[1:])

@@ -161,6 +161,43 @@ def test_trim_keeps_one_burst_of_two(rng):
     assert abs(a - 10000) < 1000 and abs(b - 90000) < 1000
 
 
+def test_trim_keeps_a_flat_envelope_whole(rng):
+    """A steady signal with +-1 dB fading has no burst/floor contrast: the
+    halfway threshold landed inside the wiggles, split the envelope into
+    runs and kept one of them (56% of the signal)."""
+    from scipy.signal import firwin, lfilter
+    from dhwani.channelization.channelizer import _trim_burst
+    n = 150000
+    nrz = np.sign(rng.standard_normal(n // 20 + 1)).repeat(20)[:n]
+    x = lfilter(firwin(41, 0.12), 1, nrz) + 0.3 * rng.standard_normal(n)
+    x *= 10 ** (0.05 * np.sin(2 * np.pi * 7 * np.arange(n) / n))  # +-1 dB
+    _, (a, b) = _trim_burst(x.astype(np.complex64))
+    assert a < 0.01 * n and b > 0.99 * n
+
+
+def test_fm_audio_is_not_trimmed(tmp_path):
+    """FM-receiver audio is louder in hiss than with a carrier (FM
+    quieting): the packet is the quiet middle, so a power trim keeps the
+    hiss and S4 reads the wrong symbol rate. A baseband-audio recording is
+    flagged and S3 skips the trim for it."""
+    import scipy.io.wavfile as wavfile
+    from scipy.signal import firwin, lfilter
+    from dhwani.channelization import channelize
+    from dhwani.common.models import SignalSegment
+    from dhwani.ingestion import load_recording
+    rng = np.random.default_rng(8)
+    n, sps = 3 * 48000, 20
+    nrz = (2.0 * rng.integers(0, 2, n // sps + 1) - 1).repeat(sps)[:n]
+    x = lfilter(firwin(41, 0.12), 1, nrz) + 0.1 * rng.standard_normal(n)
+    x[n // 3: 2 * n // 3] *= 0.3                         # quieter middle
+    p = str(tmp_path / "fm.wav")
+    wavfile.write(p, 48000, (0.2 * x).astype(np.float32))
+    rec = load_recording(p)
+    assert rec.baseband_audio and rec.meta_dict()["baseband_audio"]
+    seg = SignalSegment(0, n, -0.45, 0.45, 20.0)
+    assert channelize(rec.samples, seg, trim=False)["trimmed"] == (0, n)
+    assert channelize(rec.samples, seg)["trimmed"] != (0, n)
+
 def _late_burst_file(tmp_path, rng, start=5_000_000, n=6_000_000):
     from dhwani.synth.factory import WaveformFactory
     iq, _ = WaveformFactory(seed=4).generate(
