@@ -57,7 +57,9 @@ def _trim_burst(s: np.ndarray, margin: int = 32) -> tuple:
     k = np.ones(win) / win
     sm = np.convolve(p, k, mode="same")
     hi = np.median(sm[sm > np.median(sm)])
-    thr = 0.25 * hi
+    # halfway (in dB) between the noise floor and the burst, never below
+    # -6 dB: a weak burst's noise lead-in sits near -6 dB and was kept
+    thr = max(0.25 * hi, np.sqrt(np.percentile(sm, 10) * hi))
     idx = np.nonzero(sm > thr)[0]
     if idx.size == 0:
         return s, (0, len(s))
