@@ -1,0 +1,120 @@
+[
+  {
+    "file": "results/offair/recordings/gomx_3.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/gomx_3.wav",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 19200
+    }
+  },
+  {
+    "file": "results/offair/recordings/aausat_4.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/aausat_4.wav",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 2400
+    }
+  },
+  {
+    "file": "results/offair/recordings/entrysat.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/entrysat.wav",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "BPSK",
+      "symbol_rate_hz": 9600
+    }
+  },
+  {
+    "file": "results/offair/recordings/gr4_packet_intelsat37e.iq",
+    "license": "CC-BY-4.0, Daniel Estévez",
+    "source": "https://zenodo.org/records/13371136/files/gr4-packet-modem-intelsat37e-test.sigmf-data",
+    "sample_rate": 500,
+    "datatype": "complex64",
+    "expect": {
+      "sample_rate_hz": 500,
+      "modulation": "QPSK",
+      "symbol_rate_hz": 125,
+      "fec": "none"
+    }
+  },
+  {
+    "file": "results/offair/recordings/by02_telemetry.iq",
+    "license": "CC-BY-4.0, Daniel Estévez",
+    "source": "https://zenodo.org/records/3941245/files/BY02_2020-07-12T11:39:50_436152kHz_192ksps.raw",
+    "sample_rate": 192000,
+    "datatype": "int16",
+    "expect": {
+      "sample_rate_hz": 192000,
+      "modulation": "BPSK",
+      "symbol_rate_hz": 9600,
+      "sync_word_hex": "1acffc1d"
+    }
+  },
+  {
+    "file": "results/offair/recordings/celesta_telemetry.iq",
+    "license": "CC-BY-4.0, Daniel Estévez",
+    "source": "https://zenodo.org/records/6907821/files/CELESTA_2022-07-24T19_25_49.sigmf-data",
+    "sample_rate": null,
+    "datatype": "int16",
+    "expect": {
+      "sample_rate_hz": 40000,
+      "modulation": "2FSK"
+    }
+  },
+  {
+    "file": "results/offair/recordings/greencube_telemetry.iq",
+    "license": "CC-BY-4.0, Daniel Estévez",
+    "source": "https://zenodo.org/records/6907821/files/GREENCUBE_2022-07-24T19_25_49.sigmf-data",
+    "sample_rate": 40000,
+    "datatype": "int16",
+    "expect": {
+      "sample_rate_hz": 40000,
+      "modulation": "BPSK",
+      "symbol_rate_hz": 1200
+    }
+  },
+  {
+    "file": "results/offair/recordings/astrobio_telemetry.iq",
+    "license": "CC-BY-4.0, Daniel Estévez",
+    "source": "https://zenodo.org/records/6907821/files/ASTROBIO_2022-07-24T19_25_49.sigmf-data",
+    "sample_rate": 40000,
+    "datatype": "int16",
+    "expect": {
+      "sample_rate_hz": 40000,
+      "modulation": "2FSK"
+    }
+  },
+  {
+    "file": "results/offair/recordings/mtcube2_telemetry.iq",
+    "license": "CC-BY-4.0, Daniel Estévez",
+    "source": "https://zenodo.org/records/6907821/files/MTCube2_2022-07-24T19_25_49.sigmf-data",
+    "sample_rate": 40000,
+    "datatype": "int16",
+    "expect": {
+      "sample_rate_hz": 40000,
+      "modulation": "2FSK"
+    }
+  },
+  {
+    "file": "results/offair/recordings/hades_d_telemetry.iq",
+    "license": "CC-BY-4.0, Daniel Estévez",
+    "source": "https://zenodo.org/records/10343047/files/HADES-D_2023-12-09T11_14_50_32ksps.sigmf-data",
+    "sample_rate": 32000,
+    "datatype": "complex64",
+    "expect": {
+      "sample_rate_hz": 32000,
+      "modulation": "2FSK"
+    }
+  }
+]

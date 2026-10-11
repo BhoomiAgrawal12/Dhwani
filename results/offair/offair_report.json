@@ -1,0 +1,311 @@
+{
+  "provenance": {
+    "generated_utc": "2026-10-10T19:07:44Z",
+    "command": "validate_offair.py --manifest results/offair/manifest.json --out-dir results/offair",
+    "git_commit": "0c18fd7",
+    "git_dirty": false,
+    "cpu": "AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "python": "3.12.7",
+    "numpy": "1.26.4",
+    "scipy": "1.17.1",
+    "data": "off-air (licensed recordings, see cases)"
+  },
+  "settings": {
+    "manifest": "results\\offair\\manifest.json",
+    "cvnet": false
+  },
+  "summary": {
+    "recordings": 10,
+    "all_correct": 0,
+    "per_parameter": {
+      "fec": {
+        "n": 1,
+        "correct": 0
+      },
+      "modulation": {
+        "n": 10,
+        "correct": 0
+      },
+      "sample_rate_hz": {
+        "n": 10,
+        "correct": 6
+      },
+      "symbol_rate_hz": {
+        "n": 6,
+        "correct": 1
+      },
+      "sync_word_hex": {
+        "n": 1,
+        "correct": 0
+      }
+    }
+  },
+  "cases": [
+    {
+      "file": "results/offair/recordings/gomx_3.wav",
+      "license": "The Unlicense, Daniel Est\u00c3\u00a9vez",
+      "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/gomx_3.wav",
+      "expected": {
+        "sample_rate_hz": 48000,
+        "modulation": "2FSK",
+        "symbol_rate_hz": 19200
+      },
+      "observed": {
+        "sample_rate_hz": 24000.0,
+        "modulation": "UNKNOWN",
+        "symbol_rate_hz": 4037.8703327922076
+      },
+      "sample_rate_source": "wav_header",
+      "checks": {
+        "sample_rate_hz": false,
+        "modulation": false,
+        "symbol_rate_hz": false
+      },
+      "all_correct": false,
+      "warnings": [
+        "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4",
+        "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
+        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+      ],
+      "elapsed_s": 32.5
+    },
+    {
+      "file": "results/offair/recordings/aausat_4.wav",
+      "license": "The Unlicense, Daniel Est\u00c3\u00a9vez",
+      "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/aausat_4.wav",
+      "expected": {
+        "sample_rate_hz": 48000,
+        "modulation": "2FSK",
+        "symbol_rate_hz": 2400
+      },
+      "observed": {
+        "sample_rate_hz": 24000.0,
+        "modulation": "UNKNOWN",
+        "symbol_rate_hz": 3413.4009179149502
+      },
+      "sample_rate_source": "wav_header",
+      "checks": {
+        "sample_rate_hz": false,
+        "modulation": false,
+        "symbol_rate_hz": false
+      },
+      "all_correct": false,
+      "warnings": [
+        "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4",
+        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+      ],
+      "elapsed_s": 15.6
+    },
+    {
+      "file": "results/offair/recordings/entrysat.wav",
+      "license": "The Unlicense, Daniel Est\u00c3\u00a9vez",
+      "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/entrysat.wav",
+      "expected": {
+        "sample_rate_hz": 48000,
+        "modulation": "BPSK",
+        "symbol_rate_hz": 9600
+      },
+      "observed": {
+        "sample_rate_hz": 24000.0,
+        "modulation": "UNKNOWN",
+        "symbol_rate_hz": 9570.258728962574
+      },
+      "sample_rate_source": "wav_header",
+      "checks": {
+        "sample_rate_hz": false,
+        "modulation": false,
+        "symbol_rate_hz": true
+      },
+      "all_correct": false,
+      "warnings": [
+        "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4",
+        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+      ],
+      "elapsed_s": 26.7
+    },
+    {
+      "file": "results/offair/recordings/gr4_packet_intelsat37e.iq",
+      "license": "CC-BY-4.0, Daniel Est\u00c3\u00a9vez",
+      "source": "https://zenodo.org/records/13371136/files/gr4-packet-modem-intelsat37e-test.sigmf-data",
+      "expected": {
+        "sample_rate_hz": 500,
+        "modulation": "QPSK",
+        "symbol_rate_hz": 125,
+        "fec": "none"
+      },
+      "observed": {
+        "sample_rate_hz": 500,
+        "modulation": "UNKNOWN",
+        "symbol_rate_hz": 71.88300421383127,
+        "fec": null
+      },
+      "sample_rate_source": "user",
+      "checks": {
+        "sample_rate_hz": true,
+        "modulation": false,
+        "symbol_rate_hz": false,
+        "fec": false
+      },
+      "all_correct": false,
+      "warnings": [
+        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+      ],
+      "elapsed_s": 6.1
+    },
+    {
+      "file": "results/offair/recordings/by02_telemetry.iq",
+      "license": "CC-BY-4.0, Daniel Est\u00c3\u00a9vez",
+      "source": "https://zenodo.org/records/3941245/files/BY02_2020-07-12T11:39:50_436152kHz_192ksps.raw",
+      "expected": {
+        "sample_rate_hz": 192000,
+        "modulation": "BPSK",
+        "symbol_rate_hz": 9600,
+        "sync_word_hex": "1acffc1d"
+      },
+      "observed": {
+        "sample_rate_hz": 192000,
+        "modulation": "GMSK",
+        "symbol_rate_hz": 200.15512219830316,
+        "sync_word_hex": null
+      },
+      "sample_rate_source": "user",
+      "checks": {
+        "sample_rate_hz": true,
+        "modulation": false,
+        "symbol_rate_hz": false,
+        "sync_word_hex": false
+      },
+      "all_correct": false,
+      "warnings": [
+        "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
+        "2.96% of samples at full scale: recording appears clipped; spurious harmonics likely",
+        "analysed samples 0-4,194,304 of 5,242,880: the 4,194,304-sample window with the strongest detection among 2 scanned"
+      ],
+      "elapsed_s": 3.5
+    },
+    {
+      "file": "results/offair/recordings/celesta_telemetry.iq",
+      "license": "CC-BY-4.0, Daniel Est\u00c3\u00a9vez",
+      "source": "https://zenodo.org/records/6907821/files/CELESTA_2022-07-24T19_25_49.sigmf-data",
+      "expected": {
+        "sample_rate_hz": 40000,
+        "modulation": "2FSK"
+      },
+      "observed": {
+        "sample_rate_hz": null,
+        "modulation": "UNKNOWN"
+      },
+      "sample_rate_source": "candidates (not applied)",
+      "checks": {
+        "sample_rate_hz": false,
+        "modulation": false
+      },
+      "all_correct": false,
+      "warnings": [
+        "sample rate unknown (headerless raw IQ): all frequencies reported in normalised units; set --sample-rate to obtain absolute values",
+        "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
+        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+      ],
+      "elapsed_s": 6.8
+    },
+    {
+      "file": "results/offair/recordings/greencube_telemetry.iq",
+      "license": "CC-BY-4.0, Daniel Est\u00c3\u00a9vez",
+      "source": "https://zenodo.org/records/6907821/files/GREENCUBE_2022-07-24T19_25_49.sigmf-data",
+      "expected": {
+        "sample_rate_hz": 40000,
+        "modulation": "BPSK",
+        "symbol_rate_hz": 1200
+      },
+      "observed": {
+        "sample_rate_hz": 40000,
+        "modulation": "UNKNOWN",
+        "symbol_rate_hz": 97.65624999999999
+      },
+      "sample_rate_source": "user",
+      "checks": {
+        "sample_rate_hz": true,
+        "modulation": false,
+        "symbol_rate_hz": false
+      },
+      "all_correct": false,
+      "warnings": [
+        "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
+        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+      ],
+      "elapsed_s": 1.3
+    },
+    {
+      "file": "results/offair/recordings/astrobio_telemetry.iq",
+      "license": "CC-BY-4.0, Daniel Est\u00c3\u00a9vez",
+      "source": "https://zenodo.org/records/6907821/files/ASTROBIO_2022-07-24T19_25_49.sigmf-data",
+      "expected": {
+        "sample_rate_hz": 40000,
+        "modulation": "2FSK"
+      },
+      "observed": {
+        "sample_rate_hz": 40000,
+        "modulation": "UNKNOWN"
+      },
+      "sample_rate_source": "user",
+      "checks": {
+        "sample_rate_hz": true,
+        "modulation": false
+      },
+      "all_correct": false,
+      "warnings": [
+        "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
+        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+      ],
+      "elapsed_s": 1.2
+    },
+    {
+      "file": "results/offair/recordings/mtcube2_telemetry.iq",
+      "license": "CC-BY-4.0, Daniel Est\u00c3\u00a9vez",
+      "source": "https://zenodo.org/records/6907821/files/MTCube2_2022-07-24T19_25_49.sigmf-data",
+      "expected": {
+        "sample_rate_hz": 40000,
+        "modulation": "2FSK"
+      },
+      "observed": {
+        "sample_rate_hz": 40000,
+        "modulation": "UNKNOWN"
+      },
+      "sample_rate_source": "user",
+      "checks": {
+        "sample_rate_hz": true,
+        "modulation": false
+      },
+      "all_correct": false,
+      "warnings": [
+        "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
+        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+      ],
+      "elapsed_s": 1.2
+    },
+    {
+      "file": "results/offair/recordings/hades_d_telemetry.iq",
+      "license": "CC-BY-4.0, Daniel Est\u00c3\u00a9vez",
+      "source": "https://zenodo.org/records/10343047/files/HADES-D_2023-12-09T11_14_50_32ksps.sigmf-data",
+      "expected": {
+        "sample_rate_hz": 32000,
+        "modulation": "2FSK"
+      },
+      "observed": {
+        "sample_rate_hz": 32000,
+        "modulation": "UNKNOWN"
+      },
+      "sample_rate_source": "user",
+      "checks": {
+        "sample_rate_hz": true,
+        "modulation": false
+      },
+      "all_correct": false,
+      "warnings": [
+        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+      ],
+      "elapsed_s": 32.0
+    }
+  ]
+}

@@ -14,6 +14,11 @@ BEGIN, END = "<!-- results:begin -->", "<!-- results:end -->"
 
 
 def _load(name):
+    if name == "offair_report":
+        p_offair = os.path.join(ROOT, "results", "offair", name + ".json")
+        if os.path.exists(p_offair):
+            with open(p_offair) as f:
+                return json.load(f)
     p = os.path.join(ROOT, "results", name + ".json")
     if not os.path.exists(p):
         return None
