@@ -49,7 +49,8 @@ def channelize(x: np.ndarray, segment, target_oversample: float = 8.0,
 
 
 def _trim_burst(s: np.ndarray, margin: int = 32) -> tuple:
-    """Keep the contiguous high-envelope region of the extracted channel."""
+    """Keep the strongest contiguous high-envelope region of the extracted
+    channel (dips shorter than 8 smoothing windows are bridged)."""
     if len(s) < 1024:
         return s, (0, len(s))
     p = np.abs(s) ** 2
@@ -60,9 +61,20 @@ def _trim_burst(s: np.ndarray, margin: int = 32) -> tuple:
     # halfway (in dB) between the noise floor and the burst, never below
     # -6 dB: a weak burst's noise lead-in sits near -6 dB and was kept
     thr = max(0.25 * hi, np.sqrt(np.percentile(sm, 10) * hi))
-    idx = np.nonzero(sm > thr)[0]
-    if idx.size == 0:
+    on = np.r_[False, sm > thr, False]
+    st = np.flatnonzero(~on[:-1] & on[1:])
+    en = np.flatnonzero(on[:-1] & ~on[1:])
+    if st.size == 0:
         return s, (0, len(s))
-    a = max(0, int(idx[0]) - margin)
-    b = min(len(s), int(idx[-1]) + margin)
+    # two packets in one detection box (EntrySat: different carriers, 0.56
+    # s apart) cannot share a carrier lock: keep the stronger one
+    # ponytail: one burst per box, split boxes in S2 if frames are lost
+    runs = [[st[0], en[0]]]
+    for a, b in zip(st[1:], en[1:]):
+        if a - runs[-1][1] < 8 * win:
+            runs[-1][1] = b
+        else:
+            runs.append([a, b])
+    a, b = max(runs, key=lambda r: sm[r[0]:r[1]].sum())
+    a, b = max(0, int(a) - margin), min(len(s), int(b) + margin)
     return s[a:b], (a, b)
