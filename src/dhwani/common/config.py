@@ -17,6 +17,7 @@ class CFARConfig:
     train_bins: int = 16
     min_bandwidth_bins: int = 3
     min_duration_frames: int = 2
+    min_significance: float = 25.0     # below this, every detection is noise
     morph_close_size: int = 3
     nfft: int = 4096
     max_signals: int = 64

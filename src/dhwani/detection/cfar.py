@@ -38,7 +38,7 @@ def detect_signals(x: np.ndarray, config, sample_rate=None) -> tuple:
     mask = ndimage.binary_opening(mask, structure=np.ones((1, 2), bool))
 
     labels, n = ndimage.label(mask)
-    segments = []
+    segments, z_max = [], -np.inf
     noise_lin = 10 ** (floor / 10)
     for i, sl in enumerate(ndimage.find_objects(labels)):
         if sl is None:
@@ -54,6 +54,12 @@ def detect_signals(x: np.ndarray, config, sample_rate=None) -> tuple:
         snr = 10 * np.log10(max(sig_lin - nf_lin, 1e-20) / nf_lin)
         if snr < 1.0:
             continue
+        # significance: each pixel is one periodogram (exponential, mean =
+        # median floor / ln2), so the box's mean excess over the noise mean
+        # in standard errors is ~N(0,1) for noise. Clumps picked out of long
+        # noise files reach ~15; real signals at 0 dB SNR score > 250.
+        z_max = max(z_max, (sig_lin * np.log(2) / nf_lin - 1)
+                    * np.sqrt(block.size))
         start = int(wf["row_start_sample"][t_sl.start])
         stop_row = min(t_sl.stop - 1, len(wf["row_start_sample"]) - 1)
         end = int(wf["row_start_sample"][stop_row] + wf["nfft"])
@@ -66,6 +72,8 @@ def detect_signals(x: np.ndarray, config, sample_rate=None) -> tuple:
             sample_rate=sample_rate, id=len(segments)))
         if len(segments) >= config.max_signals:
             break
+    if z_max < config.min_significance:
+        segments = []           # only noise clumps: report no signal
     # multicarrier comb merging: many narrow, regularly spaced segments
     # are the subcarriers of ONE multicarrier (OFDM-like) emission, and
     # the comb itself is subcarrier-structure evidence. The merged wide

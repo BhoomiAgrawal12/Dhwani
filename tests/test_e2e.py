@@ -186,6 +186,20 @@ def test_e2e_noise_only(tmp_path, config):
             res.modulation.prediction == "UNKNOWN"
 
 
+def test_long_noise_detects_nothing(tmp_path, config):
+    """Off-air: 70 s noise-only captures (AstroBio, MTCube2) gave 53-56
+    CFAR 'signals' (3-bin, 2-frame noise clumps) and nonsense S4 values.
+    A long white-noise file must stop at S2 with no detections."""
+    rng = np.random.default_rng(6)
+    n = 1 << 21
+    noise = (rng.normal(size=n) + 1j * rng.normal(size=n)).astype(np.complex64)
+    p = str(tmp_path / "noise.iq")
+    noise.tofile(p)
+    res = Analyzer(config, use_cache=False).analyze(p, sample_rate=40e3)
+    assert res.segments == []
+    assert any("no signals detected" in w for w in res.warnings)
+
+
 def test_uncoded_crc_chain_exits_early(tmp_path, config):
     """A4: a CRC-validated uncoded chain is conclusive; the search used to
     explore all 40 nodes (105 s) because early exit required an FEC
