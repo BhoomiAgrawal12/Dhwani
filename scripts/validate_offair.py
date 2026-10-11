@@ -17,7 +17,12 @@ manifest (default data/offair/manifest.json), a JSON list of entries:
 sample_rate_hz scores PS task (i): leave the entry's "sample_rate" null.
 It passes when the rate the tool applied (WAV header, SigMF, file name)
 is right, or, when it applied none (headerless IQ), when the true rate
-is among its PROBABLE candidates; "sample_rate_source" says which.
+is among its PROBABLE candidates; "sample_rate_source" says which. A
+rate the manifest supplies is listed under "given", never scored. A mono
+WAV is analysed at fs/2 (real-to-complex); the file's rate is scored.
+
+"signal": false expects no detection (a capture whose source says the
+transmitter was not received); true expects at least one.
 
 Run:  python scripts/validate_offair.py [--manifest PATH] [--ml]
 Writes results/offair_report.json, labelled off-air.
@@ -43,8 +48,12 @@ from provenance import write_result
 def observed(res) -> dict:
     p, fr = res.parameters, res.frames
     meta = res.recording_meta
+    fs = meta.get("sample_rate")
+    if fs and meta.get("format") == "wav" and meta.get("channels") == 1:
+        fs *= 2                # real_to_complex halved it; score the file's
     return {
-        "sample_rate_hz": meta.get("sample_rate"),
+        "signal": bool(res.segments),
+        "sample_rate_hz": fs,
         "sample_rate_source": meta.get("sample_rate_source"),
         "sample_rate_candidates": [c["sample_rate_hz"] for c in
                                    (p.sample_rate_candidates if p else [])],
@@ -76,19 +85,28 @@ def score(entry: dict, analyzer, no_ml: bool) -> dict:
                            sample_rate=entry.get("sample_rate"),
                            datatype=entry.get("datatype"), no_ml=no_ml)
     got = observed(res)
-    checks = {k: matches(k, v, got[k]) for k, v in entry["expect"].items()}
-    want_fs = entry["expect"].get("sample_rate_hz")
+    expect = dict(entry["expect"])
+    given = []
+    if "sample_rate_hz" in expect and got["sample_rate_source"] == "user":
+        given.append("sample_rate_hz")     # echoed back, not identified
+        del expect["sample_rate_hz"]
+    checks = {k: matches(k, v, got[k]) for k, v in expect.items()}
+    want_fs = expect.get("sample_rate_hz")
     if want_fs and got["sample_rate_hz"] is None:
         # headerless: a hit among the candidates; the rate stays unapplied
         checks["sample_rate_hz"] = any(
             matches("sample_rate_hz", want_fs, c)
             for c in got["sample_rate_candidates"])
         got["sample_rate_source"] = "candidates (not applied)"
+    shown = list(entry["expect"]) + (
+        ["sample_rate_candidates"] if want_fs else [])
     return {"file": entry["file"], "license": entry["license"],
             "source": entry.get("source"), "expected": entry["expect"],
-            "observed": {k: got[k] for k in entry["expect"]},
+            "observed": {k: got[k] for k in shown},
             "sample_rate_source": got["sample_rate_source"],
-            "checks": checks, "all_correct": all(checks.values()),
+            "given": given,
+            "checks": checks,
+            "all_correct": bool(checks) and all(checks.values()),
             "warnings": res.warnings,
             "elapsed_s": round(time.perf_counter() - t0, 1)}
 
