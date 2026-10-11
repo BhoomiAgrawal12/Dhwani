@@ -124,7 +124,10 @@ candidates, and all frequencies are reported per recorded sample.
 A mono (single-channel) `.wav` is a real signal: it is converted to
 complex baseband (mixed by -fs/4, half-band filtered, decimated by 2), so
 the reported sample rate is fs/2 and the centre frequency is shifted by
-fs/4. Analysis runs on one 2^22-sample window: a longer file is scanned
+fs/4 (`recording.file_sample_rate` keeps the header's rate). A mono `.wav`
+whose band starts at DC (an FM receiver's audio output) is analysed as a
+real signal at the file rate instead (`recording.baseband_audio`); FSK,
+GFSK and GMSK cannot be told apart from such audio. Analysis runs on one 2^22-sample window: a longer file is scanned
 window by window (up to 16, about 67M samples) and the window with the
 strongest signal is analysed, or `--start-sample N` picks it; the span is
 recorded in `recording.analysed_start` / `analysed_samples`.
