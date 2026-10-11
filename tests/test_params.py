@@ -136,3 +136,18 @@ def test_unscrambled_conv_qpsk_carrier_refinement(config):
                    cfo_norm=p.carrier_offset_norm)
     assert abs(r.cfo_applied_norm) < 0.005
     assert r.demodulation_status == "GOOD"
+
+
+def test_receiver_trial_uses_the_s4_carrier(config):
+    """Off-air (EntrySat): an off-centre detection box left a residual
+    carrier of 0.124 cycles/sample after S3. S6 is given S4's carrier
+    estimate and locks BPSK at EVM 11.7%; the S5 trials were not, failed
+    BPSK at 67.9% and named QPSK. Both stages must use the same estimate."""
+    from dhwani.modulation import classify_modulation
+    from dhwani.params import estimate_parameters
+    iq, _ = WaveformFactory(seed=1).generate(
+        "BPSK", sps=2.5, snr_db=15, cfo_norm=0.12, phase_offset=0.3)
+    p = estimate_parameters(iq, config.params)
+    assert abs(p.carrier_offset_norm - 0.12) < 0.005
+    m = classify_modulation(iq, p, config.modulation)
+    assert m.prediction == "BPSK"

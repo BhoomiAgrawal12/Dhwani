@@ -95,7 +95,7 @@ def _grid_structure(symbols, candidate) -> float:
     return max(0.0, 1.0 - bias_ratio)
 
 
-def _trial_one(x, candidate, sps, demod_cfg):
+def _trial_one(x, candidate, sps, demod_cfg, cfo_norm=None):
     """Trial-demodulate one candidate with the real S6 receiver and
     score the lock against that constellation's own calibrated EVM gate.
     Raw nearest-point EVM always improves with table density, so EVM is
@@ -103,6 +103,15 @@ def _trial_one(x, candidate, sps, demod_cfg):
     occupancy factor rejects subset embeddings the EVM cannot see."""
     try:
         res = demodulate(x, candidate, sps, demod_cfg)
+        # S6 is given S4's carrier estimate; a trial that fails on its own
+        # retries with it (EntrySat: a 0.124 cycles/sample residual failed
+        # BPSK, then S6 locked it). Only a retry: on a locking signal the
+        # estimate can be a frame-structure line that invites an alias.
+        if (res.demodulation_status == "FAILED" and cfo_norm and
+                abs(cfo_norm) > 0.01):
+            res2 = demodulate(x, candidate, sps, demod_cfg, cfo_norm=cfo_norm)
+            if res2.demodulation_status != "FAILED":
+                res = res2
     except Exception:
         return None
     evm = res.evm_percent
@@ -298,6 +307,8 @@ def classify_modulation(x: np.ndarray, params, config) -> ModulationHypothesis:
         from ..common.config import DemodConfig
         demod_cfg = DemodConfig()
         xs = np.asarray(x[: 1 << 16], dtype=np.complex128)
+        # same carrier hint as S6, or a trial can fail what S6 then locks
+        cfo = getattr(params, "carrier_offset_norm", None)
         shortlist = [c for c, _p in ranked
                      if MOD_FAMILY.get(c) in _LINEAR_FAMILIES][:3]
 
@@ -306,14 +317,14 @@ def classify_modulation(x: np.ndarray, params, config) -> ModulationHypothesis:
             return -1.0 if not t or t["score"] is None else t["score"]
 
         for c in shortlist:
-            trial_detail[c] = _trial_one(xs, c, sps, demod_cfg)
+            trial_detail[c] = _trial_one(xs, c, sps, demod_cfg, cfo)
         best = max(trial_detail, key=_sc) if trial_detail else None
         if best is None or _sc(best) < 2.0:
             # nothing locked cleanly: give the family representatives a
             # hearing before concluding anything
             for c in _TRIAL_FALLBACK:
                 if c in classes and c not in trial_detail:
-                    trial_detail[c] = _trial_one(xs, c, sps, demod_cfg)
+                    trial_detail[c] = _trial_one(xs, c, sps, demod_cfg, cfo)
             best = max(trial_detail, key=_sc) if trial_detail else None
         if best is None or _sc(best) < 2.0:
             # representatives did not lock either: every remaining linear
@@ -323,7 +334,7 @@ def classify_modulation(x: np.ndarray, params, config) -> ModulationHypothesis:
             for c, _p in ranked:
                 if MOD_FAMILY.get(c) in _LINEAR_FAMILIES and \
                         c not in trial_detail:
-                    trial_detail[c] = _trial_one(xs, c, sps, demod_cfg)
+                    trial_detail[c] = _trial_one(xs, c, sps, demod_cfg, cfo)
                     if _sc(c) >= 2.0:
                         break
             best = max(trial_detail, key=_sc) if trial_detail else None
@@ -342,7 +353,7 @@ def classify_modulation(x: np.ndarray, params, config) -> ModulationHypothesis:
                 for c in _TRIAL_FALLBACK[:5]:
                     if c not in classes:
                         continue
-                    t = _trial_one(xs, c, s_alt, demod_cfg)
+                    t = _trial_one(xs, c, s_alt, demod_cfg, cfo)
                     if t and (t["score"] or 0) > max(
                             0.0, _sc(c) if c in trial_detail else 0.0):
                         trial_detail[c] = t
@@ -352,7 +363,8 @@ def classify_modulation(x: np.ndarray, params, config) -> ModulationHypothesis:
         while best in _NESTED and _NESTED[best] in classes and \
                 _NESTED[best] not in trial_detail:
             sub = _NESTED[best]
-            t_sub = trial_detail[sub] = _trial_one(xs, sub, sps, demod_cfg)
+            t_sub = trial_detail[sub] = _trial_one(xs, sub, sps, demod_cfg,
+                                                   cfo)
             t_best = trial_detail[best]
             if not (t_sub and t_sub["score"] is not None and
                     t_sub["evm"] <= 1.05 * t_best["evm"]):
@@ -368,7 +380,8 @@ def classify_modulation(x: np.ndarray, params, config) -> ModulationHypothesis:
         # envelope test when a real OOK capture needs the name
         if best == "OOK" and "BPSK" in classes:
             if "BPSK" not in trial_detail:
-                trial_detail["BPSK"] = _trial_one(xs, "BPSK", sps, demod_cfg)
+                trial_detail["BPSK"] = _trial_one(xs, "BPSK", sps, demod_cfg,
+                                                  cfo)
             if _sc("BPSK") >= 0.8:
                 constraints.append("OOK and BPSK share one bipolar "
                                    "constellation after DC removal: BPSK "
