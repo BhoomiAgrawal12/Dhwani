@@ -9,7 +9,8 @@
       "sample_rate_hz": 48000,
       "modulation": "2FSK",
       "symbol_rate_hz": 19200
-    }
+    },
+    "note": "FM-demodulated audio (gr-satellites test recording), not the FSK RF waveform"
   },
   {
     "file": "results/offair/recordings/aausat_4.wav",
@@ -21,7 +22,8 @@
       "sample_rate_hz": 48000,
       "modulation": "2FSK",
       "symbol_rate_hz": 2400
-    }
+    },
+    "note": "FM-demodulated audio (gr-satellites test recording), not the FSK RF waveform"
   },
   {
     "file": "results/offair/recordings/entrysat.wav",
@@ -51,7 +53,7 @@
   {
     "file": "results/offair/recordings/by02_telemetry.iq",
     "license": "CC-BY-4.0, Daniel Estévez",
-    "source": "https://zenodo.org/records/3941245/files/BY02_2020-07-12T11:39:50_436152kHz_192ksps.raw",
+    "source": "https://zenodo.org/records/3941245/files/BY02_2020-07-12T11:39:50_436152kHz_192ksps.raw (Linrad RAW: the 41-byte header is stripped from this excerpt)",
     "sample_rate": 192000,
     "datatype": "int16",
     "expect": {
@@ -91,9 +93,9 @@
     "sample_rate": 40000,
     "datatype": "int16",
     "expect": {
-      "sample_rate_hz": 40000,
-      "modulation": "2FSK"
-    }
+      "signal": false
+    },
+    "note": "Zenodo record: 'Signals from MTCube2 and AstroBio were not detected'"
   },
   {
     "file": "results/offair/recordings/mtcube2_telemetry.iq",
@@ -102,9 +104,9 @@
     "sample_rate": 40000,
     "datatype": "int16",
     "expect": {
-      "sample_rate_hz": 40000,
-      "modulation": "2FSK"
-    }
+      "signal": false
+    },
+    "note": "Zenodo record: 'Signals from MTCube2 and AstroBio were not detected'"
   },
   {
     "file": "results/offair/recordings/hades_d_telemetry.iq",
