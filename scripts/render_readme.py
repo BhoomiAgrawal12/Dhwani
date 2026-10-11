@@ -124,7 +124,8 @@ def render() -> str:
     if d:
         s = d["summary"]
         out.append(f"{s['all_correct']} of {s['recordings']} recordings "
-                   "fully correct.\n")
+                   "fully correct. Off-air set: recordings with "
+                   "source-verified parameters only.\n")
         out.append("| parameter | correct |")
         out.append("|---|---:|")
         out += [f"| {k} | {v['correct']}/{v['n']} |"

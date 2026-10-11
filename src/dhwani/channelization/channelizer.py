@@ -78,5 +78,6 @@ def _trim_burst(s: np.ndarray, margin: int = 32) -> tuple:
         else:
             runs.append([a, b])
     a, b = max(runs, key=lambda r: sm[r[0]:r[1]].sum())
-    a, b = max(0, int(a) - margin), min(len(s), int(b) + margin)
+    # run ends are exclusive: b - 1 is the last loud sample
+    a, b = max(0, int(a) - margin), min(len(s), int(b) - 1 + margin)
     return s[a:b], (a, b)
