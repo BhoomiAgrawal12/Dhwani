@@ -239,7 +239,7 @@ def test_offair_scoring_rules_from_first_real_run():
     e = {"file": "x.wav", "license": "test",
          "expect": {"sample_rate_hz": 48000}}
     mono = Stub(sample_rate=24000.0, sample_rate_source="wav_header",
-                format="wav", channels=1)
+                file_sample_rate=48000.0)
     assert vo.score(e, mono, True)["checks"] == {"sample_rate_hz": True}
     given = vo.score(e, Stub(sample_rate=48000.0, sample_rate_source="user"),
                      True)

@@ -29,6 +29,19 @@ const domOk = c0.html === null && c0.textContent === evil &&
 console.log(`kvTable/tile/meter escape untrusted values: ${domOk ? "PASS" : "FAIL"}`);
 if (!domOk) process.exit(1);
 
+/* mono WAV from an FM receiver: baseband audio stays real at the file rate
+ * (ingestion/wav.py is_baseband); an RF/IF carrier is still mixed down */
+const nrz = new Float64Array(1 << 15), tone = new Float64Array(1 << 15);
+let lcg = 1, bit = 1;
+for (let k = 0; k < nrz.length; k++) {
+  if (k % 20 === 0) { lcg = (lcg * 1103515245 + 12345) >>> 0; bit = lcg >>> 31 ? 1 : -1; }
+  nrz[k] = bit;
+  tone[k] = Math.cos(2 * Math.PI * 0.15 * k);
+}
+const bbOk = A.isBaseband(nrz) && !A.isBaseband(tone);
+console.log(`baseband audio vs IF carrier (mono WAV): ${bbOk ? "PASS" : "FAIL"}`);
+if (!bbOk) process.exit(1);
+
 const FIX = path.join(__dirname, "..", "examples", "webtest");
 const cases = [
   ["qpsk_c64.iq", "QPSK", {}],

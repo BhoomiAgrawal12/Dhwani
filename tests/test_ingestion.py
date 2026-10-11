@@ -94,6 +94,27 @@ def test_wav_mono_real_is_made_analytic(tmp_path, config):
     assert all(abs(s.center_norm + 0.2) < 0.1 for s in strong)
 
 
+def test_wav_mono_baseband_audio_keeps_its_rate(tmp_path, config):
+    """A mono WAV from an FM receiver holds the baseband data waveform,
+    not an RF carrier. Mixing it by -fs/4 and halving the rate halves the
+    samples per symbol and breaks the symbol rate; read as real at the
+    file rate, S4 finds 2400 Bd."""
+    import scipy.io.wavfile as wavfile
+    from scipy.signal import firwin, lfilter
+    from dhwani.pipeline import Analyzer
+    rng = np.random.default_rng(4)
+    n, sps = 1 << 17, 20                                  # 2400 Bd at 48 kHz
+    nrz = (2.0 * rng.integers(0, 2, n // sps + 1) - 1).repeat(sps)[:n]
+    x = lfilter(firwin(41, 0.12), 1, nrz) + 0.1 * rng.normal(size=n)
+    p = str(tmp_path / "audio.wav")
+    wavfile.write(p, 48000, (0.5 * x).astype(np.float32))
+    rec = load_recording(p)
+    assert rec.sample_rate == 48000 and rec.file_sample_rate == 48000
+    assert any("baseband audio" in w for w in rec.warnings)
+    res = Analyzer(config, use_cache=False).analyze(p, stop_after="S5")
+    assert abs(res.parameters.symbol_rate_hz - 2400) < 24
+
+
 import pytest  # noqa: E402
 
 

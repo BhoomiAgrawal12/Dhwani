@@ -18,8 +18,8 @@ sample_rate_hz scores PS task (i): leave the entry's "sample_rate" null.
 It passes when the rate the tool applied (WAV header, SigMF, file name)
 is right, or, when it applied none (headerless IQ), when the true rate
 is among its PROBABLE candidates; "sample_rate_source" says which. A
-rate the manifest supplies is listed under "given", never scored. A mono
-WAV is analysed at fs/2 (real-to-complex); the file's rate is scored.
+rate the manifest supplies is listed under "given", never scored. For a
+WAV the header's rate is scored (a mono IF WAV is analysed at fs/2).
 
 "signal": false expects no detection (a capture whose source says the
 transmitter was not received); true expects at least one.
@@ -48,12 +48,11 @@ from provenance import write_result
 def observed(res) -> dict:
     p, fr = res.parameters, res.frames
     meta = res.recording_meta
-    fs = meta.get("sample_rate")
-    if fs and meta.get("format") == "wav" and meta.get("channels") == 1:
-        fs *= 2                # real_to_complex halved it; score the file's
     return {
         "signal": bool(res.segments),
-        "sample_rate_hz": fs,
+        # a mono IF WAV is analysed at fs/2; the file's own rate is scored
+        "sample_rate_hz": (meta.get("file_sample_rate")
+                           or meta.get("sample_rate")),
         "sample_rate_source": meta.get("sample_rate_source"),
         "sample_rate_candidates": [c["sample_rate_hz"] for c in
                                    (p.sample_rate_candidates if p else [])],
