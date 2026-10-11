@@ -277,15 +277,16 @@ _Source: `results/samplerate_report.json` (synthetic (dhwani.synth.WaveformFacto
 
 ### Off-air recordings
 
-0 of 2 recordings fully correct.
+2 of 2 recordings fully correct. Off-air set: recordings with source-verified parameters only.
 
 | parameter | correct |
 |---|---:|
-| modulation | 0/2 |
-| sample_rate_hz | 1/2 |
+| modulation | 1/1 |
+| sample_rate_hz | 1/1 |
+| signal | 1/1 |
 | symbol_rate_hz | 1/1 |
 
-_Source: `results/offair_report.json` (off-air (licensed recordings, see cases)), commit `4c383fa`, x86_64, Python 3.12.13, 2026-10-11T15:15:56Z._
+_Source: `results/offair_report.json` (off-air (licensed recordings, see cases)), commit `f0044d7`, x86_64, Python 3.12.13, 2026-10-11T15:23:33Z._
 <!-- results:end -->
 
 ## Supported modulations (S6 demodulation)
