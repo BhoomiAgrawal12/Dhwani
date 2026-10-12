@@ -495,7 +495,9 @@ function detectSignals(wf, thresholdDb) {
     });
   }
   if (zMax < 25) return [];   /* only noise clumps: no signal */
-  out.sort((a, b) => b.snrDb - a.snrDb);
+  /* rank by excess energy, as cfar.py: a data band outweighs a thin tone */
+  const energy = (s) => Math.pow(10, s.snrDb / 10) * s.bandwidth * (s.endSample - s.startSample);
+  out.sort((a, b) => energy(b) - energy(a));
   return out.slice(0, 32).map((s, i) => ({ id: i, ...s }));
 }
 

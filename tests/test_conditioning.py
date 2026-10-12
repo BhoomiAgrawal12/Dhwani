@@ -198,6 +198,20 @@ def test_fm_audio_is_not_trimmed(tmp_path):
     assert channelize(rec.samples, seg, trim=False)["trimmed"] == (0, n)
     assert channelize(rec.samples, seg)["trimmed"] != (0, n)
 
+def test_detection_prefers_the_data_band_over_a_tone(config):
+    """Off-air (BY70-1): a 23 Hz-wide tone at 8.4 dB outranked the 5 kHz
+    BPSK band at 5.7 dB, so S3-S5 analysed the tone. Segments are ranked
+    by excess energy (SNR x bandwidth x duration), not SNR."""
+    from dhwani.detection import detect_signals
+    from dhwani.synth.factory import WaveformFactory
+    iq, _ = WaveformFactory(seed=3).generate("BPSK", sps=8, snr_db=6)
+    k = np.arange(len(iq))
+    x = iq + 0.15 * np.exp(2j * np.pi * 0.31 * k)         # narrow tone
+    x, _ = condition(x.astype(np.complex64))
+    top = detect_signals(x, config.cfar)[0][0]
+    assert top.bandwidth_norm > 0.05 and abs(top.center_norm) < 0.05
+
+
 def _late_burst_file(tmp_path, rng, start=5_000_000, n=6_000_000):
     from dhwani.synth.factory import WaveformFactory
     iq, _ = WaveformFactory(seed=4).generate(
