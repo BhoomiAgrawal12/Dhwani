@@ -115,6 +115,24 @@ def test_wav_mono_baseband_audio_keeps_its_rate(tmp_path, config):
     assert abs(res.parameters.symbol_rate_hz - 2400) < 24
 
 
+def test_two_level_baseband_audio_is_named_2fsk(tmp_path, config):
+    """Off-air (TY-2, TRISAT): FM-receiver audio of an FSK downlink was
+    named BPSK, since two baseband levels pass the bipolar receiver. Out of
+    an FM discriminator two levels are binary FSK (FSK/GFSK/GMSK alike)."""
+    import scipy.io.wavfile as wavfile
+    from scipy.signal import firwin, lfilter
+    from dhwani.pipeline import Analyzer
+    rng = np.random.default_rng(4)
+    n, sps = 1 << 17, 20
+    nrz = (2.0 * rng.integers(0, 2, n // sps + 1) - 1).repeat(sps)[:n]
+    x = lfilter(firwin(41, 0.12), 1, nrz) + 0.1 * rng.normal(size=n)
+    p = str(tmp_path / "audio.wav")
+    wavfile.write(p, 48000, (0.5 * x).astype(np.float32))
+    res = Analyzer(config, use_cache=False).analyze(p)
+    assert res.modulation.prediction == "2FSK"
+    assert res.demodulation["demodulation_status"] in ("GOOD", "DEGRADED")
+
+
 def test_bpsk_on_a_low_audio_carrier_is_not_baseband():
     """Off-air (ITASAT 1): 1200 Bd BPSK on a 1.6 kHz SSB audio carrier has
     1% of its power below fs/100, so it was read as FM-receiver baseband
