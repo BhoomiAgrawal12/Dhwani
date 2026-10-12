@@ -220,8 +220,9 @@ function parseWav(buffer) {
 }
 
 /* Real input whose band starts at DC (an FM receiver's audio): the lowest
- * 1% of its power lies below fs/100. Same test as is_baseband in
- * ingestion/wav.py (Welch PSD, 4096-point Hann segments, 50% overlap). */
+ * 1% of its power lies below fs/100 and fs/400..fs/100 is within 10 dB of
+ * the (9-bin smoothed) peak. Same test as is_baseband in ingestion/wav.py
+ * (Welch PSD, 4096-point Hann segments, 50% overlap). */
 function isBaseband(x) {
   const len = Math.min(x.length, 1 << 20);
   let n = 4096;
@@ -240,12 +241,21 @@ function isBaseband(x) {
   }
   let total = 0;
   for (let k = 0; k <= n / 2; k++) total += p[k];
-  let c = 0;
+  let c = 0, k1 = n / 2;
   for (let k = 0; k <= n / 2; k++) {
     c += p[k];
-    if (c >= 0.01 * total) return k / n < 0.01;
+    if (c >= 0.01 * total) { k1 = k; break; }
   }
-  return false;
+  if (k1 / n >= 0.01) return false;
+  let peak = 0, lo = 0, nlo = 0;
+  for (let k = 0; k <= n / 2; k++) {
+    let sm = 0;
+    for (let j = k - 4; j <= k + 4; j++) if (j >= 0 && j <= n / 2) sm += p[j];
+    sm /= 9;
+    peak = Math.max(peak, sm);
+    if (k / n >= 0.0025 && k / n <= 0.01) { lo += sm; nlo++; }
+  }
+  return nlo > 0 && lo / nlo > 0.1 * peak;
 }
 
 /* Real (mono) input at fs -> complex baseband at fs/2: mix by -fs/4,

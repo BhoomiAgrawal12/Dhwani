@@ -38,7 +38,11 @@ for (let k = 0; k < nrz.length; k++) {
   nrz[k] = bit;
   tone[k] = Math.cos(2 * Math.PI * 0.15 * k);
 }
-const bbOk = A.isBaseband(nrz) && !A.isBaseband(tone);
+/* 1200 Bd BPSK on a 1.6 kHz audio carrier (SSB audio) is not baseband */
+const bpsk = new Float64Array(nrz.length);
+for (let k = 0; k < bpsk.length; k++)
+  bpsk[k] = nrz[Math.floor(k / 2)] * Math.cos(2 * Math.PI * 1600 / 48000 * k);
+const bbOk = A.isBaseband(nrz) && !A.isBaseband(tone) && !A.isBaseband(bpsk);
 console.log(`baseband audio vs IF carrier (mono WAV): ${bbOk ? "PASS" : "FAIL"}`);
 if (!bbOk) process.exit(1);
 

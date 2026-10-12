@@ -120,13 +120,18 @@ def wav_to_complex(meta: dict) -> tuple:
 
 def is_baseband(x: np.ndarray) -> bool:
     """Real signal whose band starts at DC: the lowest 1% of its power lies
-    below fs/100. A data waveform out of an FM discriminator does; an RF or
-    audio-tone carrier (SSB-received PSK, AFSK, the IF tests) does not."""
+    below fs/100, and fs/400..fs/100 is within 10 dB of the spectral peak.
+    A data waveform out of an FM discriminator peaks near DC; an RF or
+    audio-tone carrier (SSB-received PSK, the IF tests) does not."""
     from scipy.signal import welch
     x = x[: 1 << 20]
     f, p = welch(x - x.mean(), nperseg=min(4096, len(x)))
     c = np.cumsum(p) / (p.sum() + 1e-30)
-    return bool(f[np.searchsorted(c, 0.01)] < 0.01)
+    if f[np.searchsorted(c, 0.01)] >= 0.01:
+        return False
+    sm = np.convolve(p, np.ones(9) / 9, mode="same")
+    lo = (f >= 0.0025) & (f <= 0.01)
+    return bool(lo.any() and sm[lo].mean() > 0.1 * sm.max())
 
 
 def real_to_complex(x: np.ndarray) -> np.ndarray:

@@ -28,7 +28,7 @@ from .framing.frames import binary_autocorrelation, payload_stats
 from .hypothesis import bitlayer_search
 from .ingestion import load_recording
 
-STAGE_VERSION = 9   # bump to invalidate caches when algorithms change
+STAGE_VERSION = 10   # bump to invalidate caches when algorithms change
 
 # stage catalogue for the pipeline trace (drives the flow visualisation)
 STAGES = [

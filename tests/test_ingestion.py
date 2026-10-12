@@ -115,6 +115,19 @@ def test_wav_mono_baseband_audio_keeps_its_rate(tmp_path, config):
     assert abs(res.parameters.symbol_rate_hz - 2400) < 24
 
 
+def test_bpsk_on_a_low_audio_carrier_is_not_baseband():
+    """Off-air (ITASAT 1): 1200 Bd BPSK on a 1.6 kHz SSB audio carrier has
+    1% of its power below fs/100, so it was read as FM-receiver baseband
+    audio. Baseband data peaks near DC; this band is >10 dB down there."""
+    from dhwani.ingestion.wav import is_baseband
+    rng = np.random.default_rng(5)
+    n, sps, fs = 1 << 17, 40, 48000                      # 1200 Bd
+    sym = np.sign(rng.standard_normal(n // sps + 1)).repeat(sps)[:n]
+    x = sym * np.cos(2 * np.pi * 1600 / fs * np.arange(n))
+    x += 0.05 * rng.standard_normal(n)
+    assert not is_baseband(x)
+
+
 import pytest  # noqa: E402
 
 
