@@ -57,7 +57,9 @@ def _trim_burst(s: np.ndarray, margin: int = 32) -> tuple:
     win = max(64, len(s) // 512)
     k = np.ones(win) / win
     sm = np.convolve(p, k, mode="same")
-    hi = np.median(sm[sm > np.median(sm)])
+    # burst level: 90th percentile, so a packet filling only ~20% of the
+    # box still sets it (the louder half's median was noise there)
+    hi = np.percentile(sm, 90)
     # halfway (in dB) between the noise floor and the burst, never below
     # -6 dB: a weak burst's noise lead-in sits near -6 dB and was kept.
     # Only with real contrast: a flat envelope would split on its wiggles.
