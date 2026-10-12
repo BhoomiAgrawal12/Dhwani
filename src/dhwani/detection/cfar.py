@@ -103,7 +103,11 @@ def detect_signals(x: np.ndarray, config, sample_rate=None) -> tuple:
                 confidence=0.8, sample_rate=sample_rate)
             segments = [merged] + [s for s in segments
                                    if s not in best_chain]
-    segments.sort(key=lambda s: -s.snr_db * (1 + s.bandwidth_norm))
+    # rank by excess energy: a data band spread over many bins outweighs a
+    # thin tone with a higher per-bin SNR (off-air: a 23 Hz tone at 8.4 dB
+    # beat a 5 kHz BPSK band at 5.7 dB)
+    segments.sort(key=lambda s: -(10 ** (s.snr_db / 10)) * s.bandwidth_norm
+                  * (s.end_sample - s.start_sample))
     for k, s in enumerate(segments):
         s.id = k
     return segments, {"waterfall": wf, "noise_floor_db": floor,
