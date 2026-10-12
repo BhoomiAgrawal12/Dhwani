@@ -1,8 +1,8 @@
 {
   "provenance": {
-    "generated_utc": "2026-10-12T13:56:03Z",
+    "generated_utc": "2026-10-12T16:30:14Z",
     "command": "validate_offair.py --manifest results/offair/manifest.json --out-dir results/offair",
-    "git_commit": "b817e11",
+    "git_commit": "99745be",
     "git_dirty": false,
     "cpu": "x86_64",
     "platform": "Linux-7.1.1-76070101-generic-x86_64-with-glibc2.35",
@@ -17,11 +17,11 @@
   },
   "summary": {
     "recordings": 22,
-    "all_correct": 5,
+    "all_correct": 10,
     "per_parameter": {
       "modulation": {
         "n": 21,
-        "correct": 4
+        "correct": 10
       },
       "sample_rate_hz": {
         "n": 21,
@@ -33,7 +33,7 @@
       },
       "symbol_rate_hz": {
         "n": 21,
-        "correct": 11
+        "correct": 13
       }
     }
   },
@@ -50,7 +50,7 @@
       "observed": {
         "sample_rate_hz": 48000.0,
         "modulation": "BPSK",
-        "symbol_rate_hz": 9570.387988702243,
+        "symbol_rate_hz": 9569.671064857834,
         "sample_rate_candidates": []
       },
       "sample_rate_source": "wav_header",
@@ -66,7 +66,7 @@
         "no scrambler found, but DVB was only phase-searched over its first 512 phases; a stream scrambled at another phase would look unscrambled",
         "frame structure candidate rejected: insufficient evidence (crc_pass=False, sync_found=False, sync_bits=0, column_stability=0.021, n_frames=9); periodicity alone does not make a frame"
       ],
-      "elapsed_s": 68.8
+      "elapsed_s": 87.9
     },
     {
       "file": "results/offair/recordings/astrobio_telemetry.iq",
@@ -88,7 +88,7 @@
         "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
         "no signals detected above the CFAR threshold; analysis stopped at S2"
       ],
-      "elapsed_s": 1.2
+      "elapsed_s": 2.1
     },
     {
       "file": "results/offair/recordings/by701.wav",
@@ -102,7 +102,7 @@
       "observed": {
         "sample_rate_hz": 48000.0,
         "modulation": "UNKNOWN",
-        "symbol_rate_hz": 76.171875,
+        "symbol_rate_hz": 9600.48828125,
         "sample_rate_candidates": []
       },
       "sample_rate_source": "wav_header",
@@ -110,7 +110,7 @@
       "checks": {
         "sample_rate_hz": true,
         "modulation": false,
-        "symbol_rate_hz": false
+        "symbol_rate_hz": true
       },
       "all_correct": false,
       "warnings": [
@@ -118,7 +118,7 @@
         "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
         "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
       ],
-      "elapsed_s": 0.4
+      "elapsed_s": 22.7
     },
     {
       "file": "results/offair/recordings/lilacsat1.wav",
@@ -132,7 +132,7 @@
       "observed": {
         "sample_rate_hz": 48000.0,
         "modulation": "BPSK",
-        "symbol_rate_hz": 9600.604635539134,
+        "symbol_rate_hz": 9600.63488597666,
         "sample_rate_candidates": []
       },
       "sample_rate_source": "wav_header",
@@ -145,10 +145,10 @@
       "all_correct": true,
       "warnings": [
         "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4",
-        "EVM 47.4% is too poor to slice BPSK reliably: bit stream withheld from the bit layer",
-        "S6 quality gate: demodulation FAILED (EVM 47.4%, locks T=True C=True); the bit layer is withheld rather than fed unreliable bits"
+        "EVM 48.8% is too poor to slice BPSK reliably: bit stream withheld from the bit layer",
+        "S6 quality gate: demodulation FAILED (EVM 48.8%, locks T=True C=True); the bit layer is withheld rather than fed unreliable bits"
       ],
-      "elapsed_s": 18.8
+      "elapsed_s": 22.2
     },
     {
       "file": "results/offair/recordings/duchifat_3.wav",
@@ -161,24 +161,25 @@
       },
       "observed": {
         "sample_rate_hz": 48000.0,
-        "modulation": "UNKNOWN",
-        "symbol_rate_hz": 9569.82421875,
+        "modulation": "BPSK",
+        "symbol_rate_hz": 9569.576490924805,
         "sample_rate_candidates": []
       },
       "sample_rate_source": "wav_header",
       "given": [],
       "checks": {
         "sample_rate_hz": true,
-        "modulation": false,
+        "modulation": true,
         "symbol_rate_hz": true
       },
-      "all_correct": false,
+      "all_correct": true,
       "warnings": [
         "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4",
         "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
-        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+        "no scrambler found, but DVB was only phase-searched over its first 512 phases; a stream scrambled at another phase would look unscrambled",
+        "frame structure candidate rejected: insufficient evidence (crc_pass=False, sync_found=False, sync_bits=0, column_stability=0.06, n_frames=11); periodicity alone does not make a frame"
       ],
-      "elapsed_s": 6.7
+      "elapsed_s": 11.2
     },
     {
       "file": "results/offair/recordings/fmn1.wav",
@@ -191,24 +192,25 @@
       },
       "observed": {
         "sample_rate_hz": 48000.0,
-        "modulation": "UNKNOWN",
-        "symbol_rate_hz": 9571.614583333332,
+        "modulation": "BPSK",
+        "symbol_rate_hz": 9568.755085435312,
         "sample_rate_candidates": []
       },
       "sample_rate_source": "wav_header",
       "given": [],
       "checks": {
         "sample_rate_hz": true,
-        "modulation": false,
+        "modulation": true,
         "symbol_rate_hz": true
       },
-      "all_correct": false,
+      "all_correct": true,
       "warnings": [
         "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4",
         "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
-        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+        "no scrambler found, but DVB was only phase-searched over its first 512 phases; a stream scrambled at another phase would look unscrambled",
+        "frame structure candidate rejected: insufficient evidence (crc_pass=False, sync_found=False, sync_bits=0, column_stability=0.037, n_frames=11); periodicity alone does not make a frame"
       ],
-      "elapsed_s": 10.0
+      "elapsed_s": 80.4
     },
     {
       "file": "results/offair/recordings/il01.wav",
@@ -238,7 +240,7 @@
         "no scrambler found, but DVB was only phase-searched over its first 512 phases; a stream scrambled at another phase would look unscrambled",
         "frame structure candidate rejected: insufficient evidence (crc_pass=False, sync_found=False, sync_bits=0, column_stability=0.056, n_frames=46); periodicity alone does not make a frame"
       ],
-      "elapsed_s": 49.5
+      "elapsed_s": 59.0
     },
     {
       "file": "results/offair/recordings/itasat1.wav",
@@ -251,23 +253,25 @@
       },
       "observed": {
         "sample_rate_hz": 48000.0,
-        "modulation": "OFDM",
-        "symbol_rate_hz": 2191.0400390625,
+        "modulation": "BPSK",
+        "symbol_rate_hz": 1202.4091656980693,
         "sample_rate_candidates": []
       },
       "sample_rate_source": "wav_header",
       "given": [],
       "checks": {
         "sample_rate_hz": true,
-        "modulation": false,
-        "symbol_rate_hz": false
+        "modulation": true,
+        "symbol_rate_hz": true
       },
-      "all_correct": false,
+      "all_correct": true,
       "warnings": [
-        "single-channel WAV holds baseband audio (its band starts at DC, e.g. an FM receiver's output): analysed as a real signal at the file rate; FSK, GFSK and GMSK look alike as audio",
-        "modulation 'OFDM' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
+        "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4",
+        "EVM 26.6% is marginal for BPSK: downstream results are speculative",
+        "no scrambler found, but DVB was only phase-searched over its first 512 phases; a stream scrambled at another phase would look unscrambled",
+        "frame structure candidate rejected: insufficient evidence (crc_pass=False, sync_found=False, sync_bits=0, column_stability=0.483, n_frames=93); periodicity alone does not make a frame"
       ],
-      "elapsed_s": 2.4
+      "elapsed_s": 24.4
     },
     {
       "file": "results/offair/recordings/shaonian_xing.wav",
@@ -281,7 +285,7 @@
       "observed": {
         "sample_rate_hz": 48000.0,
         "modulation": "BPSK",
-        "symbol_rate_hz": 9571.012617275963,
+        "symbol_rate_hz": 9570.996978851965,
         "sample_rate_candidates": []
       },
       "sample_rate_source": "wav_header",
@@ -297,7 +301,7 @@
         "no scrambler found, but DVB was only phase-searched over its first 512 phases; a stream scrambled at another phase would look unscrambled",
         "frame structure candidate rejected: insufficient evidence (crc_pass=False, sync_found=False, sync_bits=0, column_stability=0.027, n_frames=9); periodicity alone does not make a frame"
       ],
-      "elapsed_s": 29.6
+      "elapsed_s": 89.2
     },
     {
       "file": "results/offair/recordings/nusat.wav",
@@ -311,7 +315,7 @@
       "observed": {
         "sample_rate_hz": 192000.0,
         "modulation": "UNKNOWN",
-        "symbol_rate_hz": 40162.22426470588,
+        "symbol_rate_hz": 39984.40545808967,
         "sample_rate_candidates": []
       },
       "sample_rate_source": "wav_header",
@@ -325,7 +329,7 @@
       "warnings": [
         "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
       ],
-      "elapsed_s": 23.4
+      "elapsed_s": 6.1
     },
     {
       "file": "results/offair/recordings/snet_a.wav",
@@ -338,8 +342,8 @@
       },
       "observed": {
         "sample_rate_hz": 48000.0,
-        "modulation": "BPSK",
-        "symbol_rate_hz": 3599.945068359375,
+        "modulation": "UNKNOWN",
+        "symbol_rate_hz": 2736.0593463302753,
         "sample_rate_candidates": []
       },
       "sample_rate_source": "wav_header",
@@ -351,12 +355,10 @@
       },
       "all_correct": false,
       "warnings": [
-        "single-channel WAV holds baseband audio (its band starts at DC, e.g. an FM receiver's output): analysed as a real signal at the file rate; FSK, GFSK and GMSK look alike as audio",
-        "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
-        "EVM 52.8% is too poor to slice BPSK reliably: bit stream withheld from the bit layer",
-        "S6 quality gate: demodulation FAILED (EVM 52.8%, locks T=True C=True); the bit layer is withheld rather than fed unreliable bits"
+        "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4",
+        "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
       ],
-      "elapsed_s": 13.3
+      "elapsed_s": 33.2
     },
     {
       "file": "results/offair/recordings/aisat.wav",
@@ -385,7 +387,7 @@
         "single-channel WAV holds baseband audio (its band starts at DC, e.g. an FM receiver's output): analysed as a real signal at the file rate; FSK, GFSK and GMSK look alike as audio",
         "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
       ],
-      "elapsed_s": 10.9
+      "elapsed_s": 15.3
     },
     {
       "file": "results/offair/recordings/athenoxat_1.wav",
@@ -414,7 +416,7 @@
         "single-channel WAV holds baseband audio (its band starts at DC, e.g. an FM receiver's output): analysed as a real signal at the file rate; FSK, GFSK and GMSK look alike as audio",
         "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
       ],
-      "elapsed_s": 10.2
+      "elapsed_s": 15.7
     },
     {
       "file": "results/offair/recordings/au03.wav",
@@ -444,7 +446,7 @@
         "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
         "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
       ],
-      "elapsed_s": 15.6
+      "elapsed_s": 17.7
     },
     {
       "file": "results/offair/recordings/dsat.wav",
@@ -457,7 +459,7 @@
       },
       "observed": {
         "sample_rate_hz": 48000.0,
-        "modulation": "BPSK",
+        "modulation": "2FSK",
         "symbol_rate_hz": 9599.958147321428,
         "sample_rate_candidates": []
       },
@@ -465,7 +467,7 @@
       "given": [],
       "checks": {
         "sample_rate_hz": true,
-        "modulation": false,
+        "modulation": true,
         "symbol_rate_hz": false
       },
       "all_correct": false,
@@ -475,7 +477,7 @@
         "EVM 52.5% is too poor to slice BPSK reliably: bit stream withheld from the bit layer",
         "S6 quality gate: demodulation FAILED (EVM 52.5%, locks T=True C=True); the bit layer is withheld rather than fed unreliable bits"
       ],
-      "elapsed_s": 13.0
+      "elapsed_s": 13.4
     },
     {
       "file": "results/offair/recordings/galassia.wav",
@@ -504,7 +506,7 @@
         "single-channel WAV holds baseband audio (its band starts at DC, e.g. an FM receiver's output): analysed as a real signal at the file rate; FSK, GFSK and GMSK look alike as audio",
         "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
       ],
-      "elapsed_s": 14.8
+      "elapsed_s": 16.1
     },
     {
       "file": "results/offair/recordings/gomx_1.wav",
@@ -533,7 +535,7 @@
         "single-channel WAV holds baseband audio (its band starts at DC, e.g. an FM receiver's output): analysed as a real signal at the file rate; FSK, GFSK and GMSK look alike as audio",
         "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
       ],
-      "elapsed_s": 17.0
+      "elapsed_s": 22.5
     },
     {
       "file": "results/offair/recordings/us01.wav",
@@ -563,7 +565,7 @@
         "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
         "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
       ],
-      "elapsed_s": 10.4
+      "elapsed_s": 15.0
     },
     {
       "file": "results/offair/recordings/ty_2.wav",
@@ -576,7 +578,7 @@
       },
       "observed": {
         "sample_rate_hz": 48000.0,
-        "modulation": "BPSK",
+        "modulation": "2FSK",
         "symbol_rate_hz": 9599.330357142857,
         "sample_rate_candidates": []
       },
@@ -584,10 +586,10 @@
       "given": [],
       "checks": {
         "sample_rate_hz": true,
-        "modulation": false,
+        "modulation": true,
         "symbol_rate_hz": true
       },
-      "all_correct": false,
+      "all_correct": true,
       "warnings": [
         "single-channel WAV holds baseband audio (its band starts at DC, e.g. an FM receiver's output): analysed as a real signal at the file rate; FSK, GFSK and GMSK look alike as audio",
         "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
@@ -595,7 +597,7 @@
         "no scrambler found, but DVB was only phase-searched over its first 512 phases; a stream scrambled at another phase would look unscrambled",
         "frame structure candidate rejected: insufficient evidence (crc_pass=False, sync_found=False, sync_bits=0, column_stability=0.023, n_frames=202); periodicity alone does not make a frame"
       ],
-      "elapsed_s": 45.1
+      "elapsed_s": 60.8
     },
     {
       "file": "results/offair/recordings/ks_1q.wav",
@@ -609,7 +611,7 @@
       "observed": {
         "sample_rate_hz": 48000.0,
         "modulation": "UNKNOWN",
-        "symbol_rate_hz": 146.484375,
+        "symbol_rate_hz": 14084.40777745533,
         "sample_rate_candidates": []
       },
       "sample_rate_source": "wav_header",
@@ -624,7 +626,7 @@
         "single-channel WAV holds baseband audio (its band starts at DC, e.g. an FM receiver's output): analysed as a real signal at the file rate; FSK, GFSK and GMSK look alike as audio",
         "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
       ],
-      "elapsed_s": 0.3
+      "elapsed_s": 23.1
     },
     {
       "file": "results/offair/recordings/sanosat1.wav",
@@ -653,7 +655,7 @@
         "single-channel WAV holds baseband audio (its band starts at DC, e.g. an FM receiver's output): analysed as a real signal at the file rate; FSK, GFSK and GMSK look alike as audio",
         "modulation 'UNKNOWN' is outside the demodulation set; stopping after parameter estimation (analyst may override)"
       ],
-      "elapsed_s": 13.4
+      "elapsed_s": 17.2
     },
     {
       "file": "results/offair/recordings/trisat.wav",
@@ -666,7 +668,7 @@
       },
       "observed": {
         "sample_rate_hz": 48000.0,
-        "modulation": "BPSK",
+        "modulation": "2FSK",
         "symbol_rate_hz": 9765.806686046511,
         "sample_rate_candidates": []
       },
@@ -674,10 +676,10 @@
       "given": [],
       "checks": {
         "sample_rate_hz": true,
-        "modulation": false,
+        "modulation": true,
         "symbol_rate_hz": true
       },
-      "all_correct": false,
+      "all_correct": true,
       "warnings": [
         "single-channel WAV holds baseband audio (its band starts at DC, e.g. an FM receiver's output): analysed as a real signal at the file rate; FSK, GFSK and GMSK look alike as audio",
         "8.93% of samples at full scale: recording appears clipped; spurious harmonics likely",
@@ -686,7 +688,7 @@
         "no scrambler found, but DVB was only phase-searched over its first 512 phases; a stream scrambled at another phase would look unscrambled",
         "frame structure candidate rejected: insufficient evidence (crc_pass=False, sync_found=False, sync_bits=0, column_stability=0.239, n_frames=1039); periodicity alone does not make a frame"
       ],
-      "elapsed_s": 111.9
+      "elapsed_s": 117.6
     }
   ]
 }
