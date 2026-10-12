@@ -268,6 +268,17 @@ class Analyzer:
                     mcfg.cvnet_enabled = False
                 result.modulation = classify_modulation(base, params, mcfg)
                 modulation = result.modulation.prediction
+            # out of an FM discriminator, k baseband levels are k-FSK; the
+            # level slicer that found them stays the receiver (S6/S7)
+            demod_as = modulation
+            audio_fsk = {"BPSK": "2FSK", "OOK": "2FSK", "4ASK": "4FSK"}
+            if (rec.baseband_audio and "modulation" not in overrides
+                    and modulation in audio_fsk):
+                modulation = audio_fsk[modulation]
+                result.modulation.prediction = modulation
+                result.modulation.constraints_applied.append(
+                    f"baseband (FM-receiver) audio: {demod_as} levels are "
+                    f"{modulation}; FSK, GFSK and GMSK look alike as audio")
         prog("modulation", 1.0)
 
         trace.mark("S5", "executed",
@@ -285,11 +296,11 @@ class Analyzer:
             return result
 
         # ---------------- S6 demodulate --------------------------------
-        with timer.stage("S6_demodulate", modulation=modulation):
+        with timer.stage("S6_demodulate", modulation=demod_as):
             sps = params.samples_per_symbol or 8.0
-            demod = demodulate(base, modulation, sps, self.config.demod,
+            demod = demodulate(base, demod_as, sps, self.config.demod,
                                cfo_norm=(params.carrier_offset_norm
-                                         if not modulation.endswith("FSK") else None))
+                                         if not demod_as.endswith("FSK") else None))
             result.demodulation = demod.to_dict()
             result.warnings.extend(demod.warnings)
             if demod.symbols is not None and len(demod.symbols):
@@ -350,11 +361,11 @@ class Analyzer:
 
         # ---------------- S7 ambiguity fan-out --------------------------
         with timer.stage("S7_ambiguity"):
-            if modulation.endswith("FSK"):
+            if demod_as.endswith("FSK"):
                 streams = _fsk_streams(demod)
             else:
                 streams = enumerate_ambiguities(
-                    demod.symbols, modulation,
+                    demod.symbols, demod_as,
                     self.config.bitlayer.max_ambiguity_streams)
                 for s in streams:
                     if s.llrs is None:
