@@ -21,5 +21,264 @@
       "signal": false
     },
     "note": "Zenodo record: AstroBio signals were not detected"
+  },
+  {
+    "file": "results/offair/recordings/by701.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/by701.wav; decoded by gr-satellites test.sh as 'BY70-1'; parameters from python/satyaml/BY70-1.yml (9k6 BPSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "BPSK",
+      "symbol_rate_hz": 9600
+    },
+    "note": "BPSK in SSB-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/lilacsat1.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/lilacsat1.wav; decoded by gr-satellites test.sh as 'LilacSat-1'; parameters from python/satyaml/LilacSat-1.yml (9k6 BPSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "BPSK",
+      "symbol_rate_hz": 9600
+    },
+    "note": "BPSK in SSB-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/duchifat_3.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/duchifat_3.wav; decoded by gr-satellites test.sh as 'DUCHIFAT-3'; parameters from python/satyaml/DUCHIFAT-3.yml (9k6 BPSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "BPSK",
+      "symbol_rate_hz": 9600
+    },
+    "note": "BPSK in SSB-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/fmn1.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/fmn1.wav; decoded by gr-satellites test.sh as 'FMN-1'; parameters from python/satyaml/FMN-1.yml (9k6 BPSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "BPSK",
+      "symbol_rate_hz": 9600
+    },
+    "note": "BPSK in SSB-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/il01.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/il01.wav; decoded by gr-satellites test.sh as 'IL01'; parameters from python/satyaml/IL01.yml (9k6 BPSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "BPSK",
+      "symbol_rate_hz": 9600
+    },
+    "note": "BPSK in SSB-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/itasat1.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/itasat1.wav; decoded by gr-satellites test.sh as 'ITASAT 1'; parameters from python/satyaml/ITASAT_1.yml (1k2 BPSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "BPSK",
+      "symbol_rate_hz": 1200
+    },
+    "note": "BPSK in SSB-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/shaonian_xing.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/shaonian_xing.wav; decoded by gr-satellites test.sh as 'Shaonian Xing'; parameters from python/satyaml/Shaonian_Xing.yml (9k6 BPSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "BPSK",
+      "symbol_rate_hz": 9600
+    },
+    "note": "BPSK in SSB-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/nusat.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/nusat.wav; decoded by gr-satellites test.sh as 'NuSat 1'; parameters from python/satyaml/NuSat_1.yml (40k FSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 192000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 40000
+    }
+  },
+  {
+    "file": "results/offair/recordings/snet_a.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/snet_a.wav; decoded by gr-satellites test.sh as 'S-NET A'; parameters from python/satyaml/S-NET_A.yml (1k2 AFSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 1200
+    },
+    "note": "AFSK: binary FSK audio tones in FM-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/aisat.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/aisat.wav; decoded by gr-satellites test.sh as 'AISAT'; parameters from python/satyaml/AISAT.yml (4k8 AFSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 4800
+    },
+    "note": "AFSK: binary FSK audio tones in FM-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/athenoxat_1.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/athenoxat_1.wav; decoded by gr-satellites test.sh as 'ATHENOXAT-1'; parameters from python/satyaml/ATHENOXAT-1.yml (4k8 AFSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 4800
+    },
+    "note": "AFSK: binary FSK audio tones in FM-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/au03.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/au03.wav; decoded by gr-satellites test.sh as 'AU03'; parameters from python/satyaml/AU03.yml (4k8 AFSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 4800
+    },
+    "note": "AFSK: binary FSK audio tones in FM-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/dsat.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/dsat.wav; decoded by gr-satellites test.sh as 'D-SAT'; parameters from python/satyaml/D-SAT.yml (4k8 AFSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 4800
+    },
+    "note": "AFSK: binary FSK audio tones in FM-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/galassia.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/galassia.wav; decoded by gr-satellites test.sh as 'GALASSIA'; parameters from python/satyaml/GALASSIA.yml (4k8 AFSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 4800
+    },
+    "note": "AFSK: binary FSK audio tones in FM-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/gomx_1.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/gomx_1.wav; decoded by gr-satellites test.sh as 'GOMX-1'; parameters from python/satyaml/GOMX-1.yml (4k8 AFSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 4800
+    },
+    "note": "AFSK: binary FSK audio tones in FM-receiver audio"
+  },
+  {
+    "file": "results/offair/recordings/us01.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/us01.wav; decoded by gr-satellites test.sh as 'US01'; parameters from python/satyaml/US01.yml (9k6 FSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 9600
+    },
+    "note": "FM-demodulated audio of an FSK downlink"
+  },
+  {
+    "file": "results/offair/recordings/ty_2.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/ty_2.wav; decoded by gr-satellites test.sh as 'TY-2'; parameters from python/satyaml/TY-2.yml (9k6 FSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 9600
+    },
+    "note": "FM-demodulated audio of an FSK downlink"
+  },
+  {
+    "file": "results/offair/recordings/ks_1q.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/ks_1q.wav; decoded by gr-satellites test.sh as 'KS-1Q'; parameters from python/satyaml/KS-1Q.yml (20k FSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 20000
+    },
+    "note": "FM-demodulated audio of an FSK downlink"
+  },
+  {
+    "file": "results/offair/recordings/sanosat1.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/sanosat1.wav; decoded by gr-satellites test.sh as 'SanoSat-1'; parameters from python/satyaml/SanoSat-1.yml (500baud FSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 500
+    },
+    "note": "FM-demodulated audio of an FSK downlink"
+  },
+  {
+    "file": "results/offair/recordings/trisat.wav",
+    "license": "The Unlicense, Daniel Estévez",
+    "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/trisat.wav; decoded by gr-satellites test.sh as 'TRISAT'; parameters from python/satyaml/TRISAT.yml (9766 baud FSK downlink)",
+    "sample_rate": null,
+    "datatype": null,
+    "expect": {
+      "sample_rate_hz": 48000,
+      "modulation": "2FSK",
+      "symbol_rate_hz": 9766
+    },
+    "note": "FM-demodulated audio of an FSK downlink"
   }
 ]
