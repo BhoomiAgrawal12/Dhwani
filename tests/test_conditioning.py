@@ -161,6 +161,19 @@ def test_trim_keeps_one_burst_of_two(rng):
     assert abs(a - 10000) < 1000 and abs(b - 90000) < 1000
 
 
+def test_trim_finds_a_short_burst(rng):
+    """Off-air (DUCHIFAT-3, FMN-1): a packet 19 dB above the noise filled
+    ~20% of the detection box. The burst level was the median of the
+    louder half, which was mostly noise, so nothing was trimmed and the
+    BPSK trial saw ~80% noise (EVM ~100%)."""
+    from dhwani.channelization.channelizer import _trim_burst
+    n = 100000
+    s = (rng.standard_normal(n) + 1j * rng.standard_normal(n)) / np.sqrt(2)
+    s[40000:60000] += 9.0 * np.sign(rng.standard_normal(20000))
+    _, (a, b) = _trim_burst(s.astype(np.complex64))
+    assert abs(a - 40000) < 1000 and abs(b - 60000) < 1000
+
+
 def test_trim_keeps_a_flat_envelope_whole(rng):
     """A steady signal with +-1 dB fading has no burst/floor contrast: the
     halfway threshold landed inside the wiggles, split the envelope into
