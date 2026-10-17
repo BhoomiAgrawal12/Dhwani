@@ -8,7 +8,8 @@
     "expect": {
       "sample_rate_hz": 48000,
       "modulation": "BPSK",
-      "symbol_rate_hz": 9600
+      "symbol_rate_hz": 9600,
+      "crc": "CRC-16-X25"
     }
   },
   {
@@ -44,7 +45,8 @@
     "expect": {
       "sample_rate_hz": 48000,
       "modulation": "BPSK",
-      "symbol_rate_hz": 9600
+      "symbol_rate_hz": 9600,
+      "crc": "CRC-16-X25"
     },
     "note": "BPSK in SSB-receiver audio"
   },
@@ -57,7 +59,8 @@
     "expect": {
       "sample_rate_hz": 48000,
       "modulation": "BPSK",
-      "symbol_rate_hz": 9600
+      "symbol_rate_hz": 9600,
+      "crc": "CRC-16-X25"
     },
     "note": "BPSK in SSB-receiver audio"
   },
@@ -70,7 +73,8 @@
     "expect": {
       "sample_rate_hz": 48000,
       "modulation": "BPSK",
-      "symbol_rate_hz": 9600
+      "symbol_rate_hz": 9600,
+      "crc": "CRC-16-X25"
     },
     "note": "BPSK in SSB-receiver audio"
   },
@@ -96,7 +100,8 @@
     "expect": {
       "sample_rate_hz": 48000,
       "modulation": "BPSK",
-      "symbol_rate_hz": 9600
+      "symbol_rate_hz": 9600,
+      "crc": "CRC-16-X25"
     },
     "note": "BPSK in SSB-receiver audio"
   },

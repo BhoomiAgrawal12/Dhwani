@@ -100,6 +100,7 @@ class FramingConfig:
         {"name": "CRC-16-CCITT-FALSE", "width": 16, "poly": 0x1021, "init": 0xFFFF, "refin": False, "refout": False, "xorout": 0x0000},
         {"name": "CRC-16-XMODEM", "width": 16, "poly": 0x1021, "init": 0x0000, "refin": False, "refout": False, "xorout": 0x0000},
         {"name": "CRC-16-ARC", "width": 16, "poly": 0x8005, "init": 0x0000, "refin": True, "refout": True, "xorout": 0x0000},
+        {"name": "CRC-16-X25", "width": 16, "poly": 0x1021, "init": 0xFFFF, "refin": True, "refout": True, "xorout": 0xFFFF},
         {"name": "CRC-16-MODBUS", "width": 16, "poly": 0x8005, "init": 0xFFFF, "refin": True, "refout": True, "xorout": 0x0000},
         {"name": "CRC-32", "width": 32, "poly": 0x04C11DB7, "init": 0xFFFFFFFF, "refin": True, "refout": True, "xorout": 0xFFFFFFFF},
         {"name": "CRC-32-BZIP2", "width": 32, "poly": 0x04C11DB7, "init": 0xFFFFFFFF, "refin": False, "refout": False, "xorout": 0xFFFFFFFF},

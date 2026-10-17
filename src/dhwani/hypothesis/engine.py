@@ -15,6 +15,7 @@ import time
 import numpy as np
 
 from ..common.models import AnalysisHypothesis, InterleaverHypothesis
+from ..framing.ax25 import decode_ax25
 from ..framing.crc import crc_hunt
 from ..framing.frames import analyze_frames, find_frame_length
 from ..fec.detect import identify_fec, identify_outer
@@ -63,9 +64,37 @@ def _deinterleave_with(bits: np.ndarray, hyp: InterleaverHypothesis) -> np.ndarr
     return b
 
 
+def _ax25_result(bits: np.ndarray):
+    """AX.25/G3RUH path: CRC-valid HDLC frames make a validated frame
+    structure (frames of the most common length are stacked)."""
+    found = decode_ax25(bits)
+    if not found:
+        return None
+    lengths = [len(f["data"]) for f in found]
+    n = max(set(lengths), key=lengths.count)
+    same = [f for f in found if len(f["data"]) == n]
+    frames = np.array([np.unpackbits(np.frombuffer(f["data"], np.uint8))
+                       for f in same], np.uint8)
+    fl = n * 8
+    fr = analyze_frames(frames.reshape(-1), fl)
+    hit = {"name": "CRC-16-X25", "width": 16, "poly": 0x1021,
+           "init": 0xFFFF, "refin": True, "refout": True, "xorout": 0xFFFF,
+           "data_start_byte": 0, "crc_byte_offset": n - 2,
+           "passes": len(same), "total": len(same), "pass_fraction": 1.0,
+           "callsigns": same[0]["callsigns"]}
+    frame_result = {"frame_length": fl, "analysis": fr,
+                    "candidates": [{"length": fl, "score": 1.0,
+                                    "stability": 1.0}],
+                    "bits_inverted": False, "ax25_frames": len(found)}
+    return frame_result, [hit], frames.reshape(-1)
+
+
 def _frame_and_crc(decoded: np.ndarray, framing_config) -> tuple:
     """Frame length, sync re-stacking and CRC hunt on both polarities.
     Returns (frame_result or None, crc_hits, bits the frames were cut from)."""
+    ax = _ax25_result(decoded)
+    if ax is not None:
+        return ax
     frame_result, crc_hits = None, []
     # the Viterbi output polarity can be flipped by ambiguity
     # transforms the structural tests are blind to; framing and
