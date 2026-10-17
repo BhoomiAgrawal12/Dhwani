@@ -62,6 +62,8 @@ def observed(res) -> dict:
         "interleaver": res.interleaver.kind if res.interleaver else None,
         "frame_length_bits": fr.frame_length_bits if fr else None,
         "crc": (fr.crc or {}).get("name") if fr else None,
+        "crc_frames": (fr.crc or {}).get("passes") if fr else None,
+        "callsigns": (fr.crc or {}).get("callsigns") if fr else None,
         "sync_word_hex": fr.sync_word_hex if fr else None,
     }
 
@@ -102,6 +104,8 @@ def score(entry: dict, analyzer, no_ml: bool) -> dict:
     return {"file": entry["file"], "license": entry["license"],
             "source": entry.get("source"), "expected": entry["expect"],
             "observed": {k: got[k] for k in shown},
+            "decoded": {"crc": got["crc"], "frames": got["crc_frames"],
+                        "callsigns": got["callsigns"]},
             "sample_rate_source": got["sample_rate_source"],
             "given": given,
             "checks": checks,

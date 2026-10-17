@@ -281,12 +281,26 @@ _Source: `results/samplerate_report.json` (synthetic (dhwani.synth.WaveformFacto
 
 | parameter | correct |
 |---|---:|
+| crc | 5/5 |
 | modulation | 9/9 |
 | sample_rate_hz | 9/9 |
 | signal | 1/1 |
 | symbol_rate_hz | 9/9 |
 
-_Source: `results/offair_report.json` (off-air (licensed recordings, see cases)), commit `622fe09`, x86_64, Python 3.12.13, 2026-10-12T16:44:00Z._
+| recording | expected | Dhwani | frames / CRC | mod | baud | fs |
+|---|---|---|---|:-:|:-:|:-:|
+| [entrysat](https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/entrysat.wav) | BPSK 9600 Bd | BPSK 9570 Bd | 1 frame(s), CRC-16-X25 ✓; F6KTA-0 → ON02FR-0 | ✓ | ✓ | ✓ |
+| [astrobio_telemetry](https://zenodo.org/records/6907821/files/ASTROBIO_2022-07-24T19_25_49.sigmf-data) | no signal | no signal | - | - | - | - |
+| [lilacsat1](https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/lilacsat1.wav) | BPSK 9600 Bd | BPSK 9601 Bd | - | ✓ | ✓ | ✓ |
+| [duchifat_3](https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/duchifat_3.wav) | BPSK 9600 Bd | BPSK 9570 Bd | 1 frame(s), CRC-16-X25 ✓; GS-1 → 4X4HSL-1 | ✓ | ✓ | ✓ |
+| [fmn1](https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/fmn1.wav) | BPSK 9600 Bd | BPSK 9569 Bd | 1 frame(s), CRC-16-X25 ✓; BUAAGS-0 → BUAABJ-0 | ✓ | ✓ | ✓ |
+| [il01](https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/il01.wav) | BPSK 9600 Bd | BPSK 9573 Bd | 1 frame(s), CRC-16-X25 ✓; 4X4HSC-0 → ON01IL-0 | ✓ | ✓ | ✓ |
+| [itasat1](https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/itasat1.wav) | BPSK 1200 Bd | BPSK 1202 Bd | - | ✓ | ✓ | ✓ |
+| [shaonian_xing](https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/shaonian_xing.wav) | BPSK 9600 Bd | BPSK 9571 Bd | 2 frame(s), CRC-16-X25 ✓; mxsat-1 → mxsat-1 | ✓ | ✓ | ✓ |
+| [ty_2](https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/ty_2.wav) | 2FSK 9600 Bd | 2FSK 9599 Bd | - | ✓ | ✓ | ✓ |
+| [trisat](https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/trisat.wav) | 2FSK 9766 Bd | 2FSK 9766 Bd | - | ✓ | ✓ | ✓ |
+
+_Source: `results/offair_report.json` (off-air (licensed recordings, see cases)), commit `fbc71fc`, x86_64, Python 3.12.3, 2026-10-17T21:50:55Z._
 <!-- results:end -->
 
 ## Supported modulations (S6 demodulation)
