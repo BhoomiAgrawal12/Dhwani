@@ -296,3 +296,12 @@ def test_readme_loads_offair_report_from_offair_dir(tmp_path, monkeypatch):
     # 2. Priority: results/offair/offair_report.json takes precedence
     (res_offair / "offair_report.json").write_text(json.dumps({"source": "offair_dir"}))
     assert rr._load("offair_report") == {"source": "offair_dir"}
+
+
+def test_matrix_case_records_s5_confidence(config):
+    """The precision-recall chart needs S5's confidence on every case."""
+    import validate_matrix as vm
+    from dhwani.pipeline import Analyzer
+    row = vm.run_case("BPSK", 25, 7, config, Analyzer(config, use_cache=False),
+                      False)
+    assert 0.0 <= row["confidence"] <= 1.0

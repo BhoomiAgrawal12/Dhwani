@@ -130,11 +130,48 @@ def render() -> str:
         out.append("|---|---:|")
         out += [f"| {k} | {v['correct']}/{v['n']} |"
                 for k, v in s["per_parameter"].items()]
+        out += _offair_table(d["cases"])
         out.append("\n" + _source(d, "offair_report"))
     else:
         out.append("_Measured on synthetic recordings; to score real "
                    "captures run `python scripts/validate_offair.py`._")
     return "\n".join(out)
+
+
+def _offair_table(cases) -> list:
+    """One row per recording: expected, Dhwani's result, decoded frames,
+    and a tick per scored parameter."""
+    mark = lambda ok: "✓" if ok else "✗"
+    rows = ["", "| recording | expected | Dhwani | frames / CRC | "
+            "mod | baud | fs |", "|---|---|---|---|:-:|:-:|:-:|"]
+    for c in cases:
+        name = os.path.splitext(os.path.basename(c["file"]))[0]
+        url = (c.get("source") or "").split(";")[0].strip()
+        link = f"[{name}]({url})" if url.startswith("http") else name
+        e, o, k = c["expected"], c["observed"], c["checks"]
+        if e.get("signal") is False:
+            rows.append(f"| {link} | no signal | "
+                        f"{'no signal' if k.get('signal') else 'signal'} "
+                        f"| - | - | - | - |")
+            continue
+        got_rate = o.get("symbol_rate_hz")
+        dec = c.get("decoded") or {}
+        if dec.get("crc") and dec.get("frames"):
+            calls = " → ".join(dec.get("callsigns") or [])
+            frames = f"{dec['frames']} frame(s), {dec['crc']} ✓; {calls}"
+        else:
+            frames = "-"
+        rows.append(
+            f"| {link} | {e.get('modulation')} {e.get('symbol_rate_hz')} Bd "
+            f"| {o.get('modulation')} {got_rate:.0f} Bd | {frames} | "
+            f"{mark(k.get('modulation'))} | {mark(k.get('symbol_rate_hz'))} "
+            f"| {mark(k.get('sample_rate_hz'))} |"
+            if got_rate else
+            f"| {link} | {e.get('modulation')} {e.get('symbol_rate_hz')} Bd "
+            f"| {o.get('modulation')} | {frames} | "
+            f"{mark(k.get('modulation'))} | {mark(k.get('symbol_rate_hz'))} "
+            f"| {mark(k.get('sample_rate_hz'))} |")
+    return rows
 
 
 def main(argv=None):

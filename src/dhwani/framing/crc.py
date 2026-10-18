@@ -68,6 +68,7 @@ CRC_PRESETS = [
     {"name": "CRC-16-ARC", "width": 16, "poly": 0x8005, "init": 0x0000, "refin": True, "refout": True, "xorout": 0x0000},
     {"name": "CRC-32", "width": 32, "poly": 0x04C11DB7, "init": 0xFFFFFFFF, "refin": True, "refout": True, "xorout": 0xFFFFFFFF},
     {"name": "CRC-8", "width": 8, "poly": 0x07, "init": 0x00, "refin": False, "refout": False, "xorout": 0x00},
+    {"name": "CRC-16-X25", "width": 16, "poly": 0x1021, "init": 0xFFFF, "refin": True, "refout": True, "xorout": 0xFFFF},
 ]
 
 

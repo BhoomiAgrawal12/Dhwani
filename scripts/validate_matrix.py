@@ -176,6 +176,7 @@ def run_case(mod, snr, seed, cfg, analyzer, full_chain, axis=None):
     top1 = m.prediction == mod or (mod, m.prediction) in equiv
     top2 = top1 or any(a[0] == mod for a in m.alternatives[:2])
     row["classified"] = m.prediction
+    row["confidence"] = round(float(m.confidence), 4)
     row["class_top1"] = bool(top1)
     row["class_top2"] = bool(top2)
 
@@ -297,8 +298,8 @@ def main():
                 for seed in range(7, 7 + args.seeds):
                     r = run_case(mod, snr, seed, cfg, analyzer, False)
                     sweep.append({k: r.get(k) for k in (
-                        "modulation", "snr_db", "seed", "class_top1", "ber",
-                        "demod_status")})
+                        "modulation", "snr_db", "seed", "class_top1", "confidence",
+                        "ber", "demod_status")})
                 print(f"sweep {mod:8s} {snr:3d} dB done", flush=True)
     path = write_result("validation_report", {
         "settings": {"quick": args.quick, "seeds": list(range(7, 7 + args.seeds)),
