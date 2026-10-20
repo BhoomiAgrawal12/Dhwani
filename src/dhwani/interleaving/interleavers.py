@@ -1,22 +1,31 @@
 """Interleaver encoders + exact inverses (used by the synthetic factory and
-by the blind identifier to test hypotheses)."""
+by the blind identifier to test hypotheses).
+
+Bits come back as uint8 whatever integer or bool type goes in; floating
+input (an LLR array) keeps its dtype, so it goes through the same
+permutation as the bits it belongs to."""
 from __future__ import annotations
 
 import numpy as np
+
+
+def _as_stream(bits) -> np.ndarray:
+    a = np.asarray(bits)
+    return a if np.issubdtype(a.dtype, np.floating) else a.astype(np.uint8, copy=False)
 
 
 def block_interleave(bits: np.ndarray, rows: int, cols: int) -> np.ndarray:
     """Write row-wise, read column-wise, block by block."""
     P = rows * cols
     n = (len(bits) // P) * P
-    m = np.asarray(bits[:n], dtype=np.uint8).reshape(-1, rows, cols)
+    m = _as_stream(bits[:n]).reshape(-1, rows, cols)
     return m.transpose(0, 2, 1).reshape(-1)
 
 
 def block_deinterleave(bits: np.ndarray, rows: int, cols: int) -> np.ndarray:
     P = rows * cols
     n = (len(bits) // P) * P
-    m = np.asarray(bits[:n], dtype=np.uint8).reshape(-1, cols, rows)
+    m = _as_stream(bits[:n]).reshape(-1, cols, rows)
     return m.transpose(0, 2, 1).reshape(-1)
 
 
@@ -34,14 +43,15 @@ def _conv_perm(n: int, branches: int, delay: int) -> np.ndarray:
 def conv_interleave(bits: np.ndarray, branches: int, delay: int) -> np.ndarray:
     n = len(bits)
     perm = _conv_perm(n, branches, delay)
-    return np.asarray(bits, dtype=np.uint8)[perm]
+    return _as_stream(bits)[perm]
 
 
 def conv_deinterleave(bits: np.ndarray, branches: int, delay: int) -> np.ndarray:
+    bits = _as_stream(bits)
     n = len(bits)
     perm = _conv_perm(n, branches, delay)
-    out = np.empty(n, dtype=np.uint8)
-    out[perm] = np.asarray(bits, dtype=np.uint8)
+    out = np.empty(n, dtype=bits.dtype)
+    out[perm] = bits
     return out
 
 
@@ -50,7 +60,8 @@ def helical_interleave(bits: np.ndarray, rows: int, cols: int, step: int) -> np.
     (diagonal/helical read-out)."""
     P = rows * cols
     n = (len(bits) // P) * P
-    m = np.asarray(bits[:n], dtype=np.uint8).reshape(-1, rows, cols)
+    # a copy: the column shifts below are in place
+    m = np.array(_as_stream(bits[:n])).reshape(-1, rows, cols)
     for c in range(cols):
         m[:, :, c] = np.roll(m[:, :, c], (c * step) % rows, axis=1)
     return m.transpose(0, 2, 1).reshape(-1)
@@ -59,7 +70,7 @@ def helical_interleave(bits: np.ndarray, rows: int, cols: int, step: int) -> np.
 def helical_deinterleave(bits: np.ndarray, rows: int, cols: int, step: int) -> np.ndarray:
     P = rows * cols
     n = (len(bits) // P) * P
-    m = np.asarray(bits[:n], dtype=np.uint8).reshape(-1, cols, rows).transpose(0, 2, 1).copy()
+    m = _as_stream(bits[:n]).reshape(-1, cols, rows).transpose(0, 2, 1).copy()
     for c in range(cols):
         m[:, :, c] = np.roll(m[:, :, c], -((c * step) % rows), axis=1)
     return m.reshape(len(m), -1).reshape(-1)
@@ -85,7 +96,7 @@ def ieee80211_permutation(ncbps: int, nbpsc: int) -> np.ndarray:
 def pn_interleave(bits: np.ndarray, permutation: np.ndarray) -> np.ndarray:
     P = len(permutation)
     n = (len(bits) // P) * P
-    m = np.asarray(bits[:n], dtype=np.uint8).reshape(-1, P)
+    m = _as_stream(bits[:n]).reshape(-1, P)
     return m[:, permutation].reshape(-1)
 
 
@@ -93,5 +104,5 @@ def pn_deinterleave(bits: np.ndarray, permutation: np.ndarray) -> np.ndarray:
     P = len(permutation)
     inv = np.argsort(permutation)
     n = (len(bits) // P) * P
-    m = np.asarray(bits[:n], dtype=np.uint8).reshape(-1, P)
+    m = _as_stream(bits[:n]).reshape(-1, P)
     return m[:, inv].reshape(-1)

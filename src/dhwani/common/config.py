@@ -80,6 +80,7 @@ class FECConfig:
         {"n": 255, "k": 239, "prim": 0x11d, "fcr": 1, "generator": 2},
         {"n": 255, "k": 239, "prim": 0x11d, "fcr": 0, "generator": 2},
         {"n": 255, "k": 223, "prim": 0x11d, "fcr": 0, "generator": 2},
+        {"n": 204, "k": 188, "prim": 0x11d, "fcr": 0, "generator": 2},  # DVB
     ])
     ldpc_candidates: list = field(default_factory=lambda: [
         {"n": 128, "k": 64, "seed": 1},

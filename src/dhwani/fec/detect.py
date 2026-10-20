@@ -1,19 +1,32 @@
 """Blind FEC identification (stage S9) - core IP.
 
-Convolutional: the dual-code test.  For a rate-1/2 code with generators
-(g1, g2), every coded stream satisfies g2(D)v1(D) + g1(D)v2(D) = 0.  We
-sweep candidate (K, g1, g2) and both stream pairings; the true parameters
-give a syndrome-zero rate near 1 while wrong ones sit near 0.5.
+Convolutional: the dual-code test.  A coded stream satisfies its code's
+parity checks (for rate 1/2 with generators (g1, g2):
+g2(D)v1(D) + g1(D)v2(D) = 0).  The candidates - the Code Registry's
+rate-1/2 codes with their lightest checks, the standard codes and an
+exhaustive small-K generator sweep - are scored together by the Code
+Probe at both stream offsets and both syndrome signs and judged by the
+Early Verdict (an SPRT), so "no code" is dropped before any Viterbi
+decode.  A syndrome-zero rate of min_rate still admits a candidate as
+before; below it a "code" must also stand out from the sweep's own
+decoys (structure in uncoded data biases wrong checks too), and its
+decode must sit no further from the stream than the BER its checks read
+(a check that holds on only part of the stream reads a BER no decode
+reaches).  The survivors are decoded (soft Viterbi when LLRs are
+aligned) with substream-inversion resolution.
 
-Reed-Solomon: sweep the candidate table over bit and symbol alignment,
-scoring by all-zero-syndrome codeword fraction (cheap first pass on a few
-codewords, confirmation pass on many).
+Reed-Solomon: the probe's prefix-XOR scan tests every bit offset and
+codeword alignment of every candidate at once; each alignment's
+clean-codeword indicators get the same Early Verdict.
 
 The returned hypotheses carry `syndrome_zero_rate` - the objective
-confidence metric that drives the retry loop.
+confidence metric that drives the retry loop, for convolutional codes
+the fraction of zero syndromes of the best check, (1 + its hard mean)/2 -
+and the Early Verdict that produced them.
 """
 from __future__ import annotations
 
+import functools
 import itertools
 
 import numpy as np
@@ -22,167 +35,248 @@ from ..common.models import FECHypothesis
 from .conv import ConvCode, STANDARD_CODES, viterbi_decode, conv_encode
 from .rs import RSCode, bits_to_symbols
 from .ldpc import identify_ldpc
+from .probe import (DECOY_Z, MIN_CHECKS, ber_spread, decoy_null,
+                    probe_checks, probe_pairs, probe_rs_many, row_best,
+                    soft_values, stream_stats, summarize, usable_llrs)
+from .registry import basic_check, conv_entries, rs_entry
+
+# A code admitted below min_rate must explain the stream: the ML decode of
+# a true code is never further from the received bits than the codeword
+# that was sent, so its re-encode BER stays within sampling error of the
+# BER the checks read.  A check that holds on part of the stream only (a
+# rate-1/3 or punctured code seen through a rate-1/2 check, NRZI'd text)
+# reads a low BER that no decode reaches (measured: 11 to 85 sigma off).
+AGREE_SIGMAS = 4.0     # sampling error allowed between the two BER readings
+AGREE_SLACK = 0.005    # plus this: soft-decision decodes, slightly bursty errors
 
 
-def _conv_syndrome_rate(bits: np.ndarray, g1: int, g2: int, K: int,
-                        offset: int) -> float:
-    """Fraction of zero syndromes for the dual-code parity check."""
-    v = bits[offset:]
-    n = (len(v) // 2) * 2
-    v1 = v[0:n:2].astype(np.uint8)
-    v2 = v[1:n:2].astype(np.uint8)
-    m = len(v1) - K
-    if m < 64:
-        return 0.0
-    syn = np.zeros(m, dtype=np.uint8)
-    # bit i of g corresponds to delay K-1-i (MSB = delay 0), so indexing
-    # v[i:i+m] with bit i implements the true parity convolution
-    # g2(D) v1(D) + g1(D) v2(D) = 0 in encoder (MSB-first) convention.
-    for i in range(K):
-        if (g2 >> i) & 1:
-            syn ^= v1[i:i + m]
-        if (g1 >> i) & 1:
-            syn ^= v2[i:i + m]
-    return float(1.0 - syn.mean())
-
-
-def _conv_syndrome_rate_signed(bits, g1, g2, K, offset):
-    """Constancy test: substream inversions (produced by constellation
-    rotation ambiguities, which are affine maps on the bit pairs) turn the
-    dual-code syndrome into a *constant* 1 instead of 0.  Either constant
-    value is therefore a detection; which substreams are inverted is
-    resolved later at decode time. Returns (rate, syndrome_is_one)."""
-    r = _conv_syndrome_rate(bits, g1, g2, K, offset)
-    if (1.0 - r) > r:
-        return 1.0 - r, True
-    return r, False
-
-
-def identify_convolutional(bits: np.ndarray, constraint_lengths=(3, 5, 7, 9),
-                           exhaustive_max_k: int = 7,
-                           max_test_bits: int = 100000,
-                           min_rate: float = 0.7) -> list:
-    """Sweep candidate rate-1/2 codes; returns hypotheses sorted by
-    syndrome-zero rate."""
-    bits = np.asarray(bits[:max_test_bits], dtype=np.uint8)
-    results = []
-    tested = set()
-
-    def test(K, g1, g2):
-        key = (K, g1, g2)
-        if key in tested:
-            return
-        tested.add(key)
-        for off in (0, 1):
-            rate, syn_one = _conv_syndrome_rate_signed(bits, g1, g2, K, off)
-            if rate >= min_rate:
-                results.append({"K": K, "g1": g1, "g2": g2, "offset": off,
-                                "syndrome_is_one": syn_one,
-                                "syndrome_zero_rate": rate})
-
-    # standard codes first (cheap, most likely)
+@functools.lru_cache(maxsize=8)
+def _conv_hypotheses(constraint_lengths: tuple, exhaustive_max_k: int) -> tuple:
+    """Insertion-ordered (K, g1, g2) candidates and how each is scored:
+    the registry's rate-1/2 codes and the standard codes by their own
+    checks (taps flattened, rows bounds[i]:bounds[i+1]), then the
+    exhaustive sweep by its basic dual check, one probe_pairs pass per K
+    (sweeps: (K, even parts, odd parts, pair row per hypothesis)).
+    sign_at[i] is the hypothesis's row (from bounds[i]) holding its basic
+    check g2(D)v1 + g1(D)v2: its tap counts on v1 and v2 are the
+    generators' weights, so it sees a one-substream inversion whenever
+    the old sweep did, while a lighter multiple u(D)(g2, g1) with u(1) = 0
+    has even counts on both substreams and never does.
+    Stream-independent, so built once per sweep setting."""
+    hyps, checks, sign_at, seen = [], [], [], set()
+    for e in conv_entries():
+        if e["rate"] == "1/2" and e["puncture"] is None:
+            K, (g1, g2) = e["K"], e["generators"]
+            seen.add((K, g1, g2))
+            hyps.append((K, g1, g2))
+            rows = [c["taps"] for c in e["checks"]]
+            basic = basic_check(K, g1, g2)
+            at = next((j for j, tp in enumerate(rows)
+                       if np.array_equal(tp, basic)), None)
+            if at is None:
+                rows.append(basic)
+                at = len(rows) - 1
+            checks.append(rows)
+            sign_at.append(at)
     for code in STANDARD_CODES:
         g1, g2 = code.generators
-        test(code.K, g1, g2)
-    # exhaustive small-K sweep: both polys must tap first and last position
+        if (code.K, g1, g2) not in seen:
+            seen.add((code.K, g1, g2))
+            hyps.append((code.K, g1, g2))
+            checks.append([basic_check(code.K, g1, g2)])
+            sign_at.append(0)
+    sweeps = []
+    # exhaustive small-K sweep: both polys must tap first and last position;
+    # g2(D)v1 + g1(D)v2 = (even taps from g2) x (odd taps from g1)
     for K in constraint_lengths:
         if K > exhaustive_max_k:
             continue
         top = 1 << (K - 1)
         cands = [top | 1 | (m << 1) for m in range(1 << (K - 2))]
-        for g1, g2 in itertools.combinations(cands, 2):
-            test(K, g1, g2)
-            test(K, g2, g1)
-    results.sort(key=lambda r: -r["syndrome_zero_rate"])
-    return results
+        idx = {g: i for i, g in enumerate(cands)}
+        i = np.arange(K)
+        even = tuple(2 * i[((g >> i) & 1).astype(bool)] for g in cands)
+        odd = tuple(2 * i[((g >> i) & 1).astype(bool)] + 1 for g in cands)
+        rows = []
+        for a, b in itertools.combinations(cands, 2):
+            for g1, g2 in ((a, b), (b, a)):
+                if (K, g1, g2) not in seen:
+                    seen.add((K, g1, g2))
+                    hyps.append((K, g1, g2))
+                    rows.append(idx[g2] * len(cands) + idx[g1])
+                    sign_at.append(0)
+        sweeps.append((K, even, odd, np.array(rows, dtype=np.intp)))
+    taps = tuple(tp for c in checks for tp in c)
+    bounds = np.cumsum([0] + [len(c) for c in checks]
+                       + [1] * sum(len(sw[3]) for sw in sweeps))
+    return tuple(hyps), taps, tuple(sweeps), bounds, tuple(sign_at)
+
+
+def identify_convolutional(bits: np.ndarray, constraint_lengths=(3, 5, 7, 9),
+                           exhaustive_max_k: int = 7,
+                           max_test_bits: int = 100000,
+                           min_rate: float = 0.7, llrs: np.ndarray = None) -> list:
+    """Rate-1/2 candidates ranked by Code Probe + Early Verdict at both
+    stream offsets and both syndrome signs: registry and standard codes
+    with their own checks, the generator sweep in one probe_pairs pass per
+    constraint length.
+
+    Kept: a hard syndrome-zero rate >= min_rate over MIN_CHECKS checks
+    (the old gate; verdict "code" or undecided), and below it a "code"
+    whose z also stands DECOY_Z spreads above the sweep's own decoys of
+    its check weight (decoy_null): text, repeated frames and fixed headers
+    bias wrong checks of uncoded data, and the decoys measure by how much.
+    syndrome_is_one comes from the basic dual check (see
+    _conv_hypotheses).  Order: verdict "code" first, then mean check value
+    (2 dp), lighter check, smaller K, then insertion order (registry and
+    standard codes before the sweep), which keeps a code ahead of its
+    catastrophic multiples u(D)(g1, g2)."""
+    bits = np.asarray(bits, dtype=np.uint8)
+    soft = None
+    if llrs is not None and len(llrs) == len(bits):
+        soft = np.asarray(llrs)[:max_test_bits]
+    bits = bits[:max_test_bits]
+    if len(bits) < 2 * MIN_CHECKS:
+        return []
+    hyps, taps, sweeps, bounds, sign_at = _conv_hypotheses(
+        tuple(constraint_lengths), exhaustive_max_k)
+    t = soft_values(bits, soft)
+    st = stream_stats(t, bits)
+    parts = [probe_checks(t, bits, list(taps), period=2, _st=st)]
+    for K, even, odd, rows in sweeps:
+        pr = probe_pairs(t, bits, list(even), list(odd), span=2 * K, _st=st)
+        parts.append({k: v[rows] for k, v in pr.items()})
+    res = {k: np.concatenate([p[k] for p in parts]) for k in parts[0]}
+    # every hypothesis and phase of the sweep is a decoy for the others
+    null = decoy_null(res["z"], res["weight"])
+    key, phase, sign_i, state = row_best(res)
+    ranked = []
+    for i, (K, g1, g2) in enumerate(hyps):
+        b = bounds[i] + int(np.argmax(key[bounds[i]:bounds[i + 1]]))
+        if state[b] == -1:
+            continue
+        p, s = phase[b], 1 - 2 * int(sign_i[b])
+        if (1 + s * res["hard_mean"][b, p]) / 2 < min_rate or \
+                res["n"][b, p] < MIN_CHECKS:
+            if state[b] != 1 or \
+                    null(res["z"][b, p], res["weight"][b, p], s) < DECOY_Z:
+                continue
+        r = summarize(res, range(bounds[i], bounds[i + 1]))
+        hit = {"K": K, "g1": g1, "g2": g2, "offset": r["phase"],
+               "syndrome_is_one": bool(res["mean"][bounds[i] + sign_at[i],
+                                                   r["phase"]] < 0),
+               "syndrome_zero_rate": r["syndrome_zero_rate"],
+               "early_verdict": r["early_verdict"], "z": r["z"],
+               "check_weight": r["weight"], "n_checks": r["n"]}
+        ranked.append(((r["early_verdict"]["verdict"] != "code",
+                        -round(r["mean"], 2), r["weight"], K, i), hit))
+    ranked.sort(key=lambda kh: kh[0])
+    return [h for _, h in ranked]
 
 
 def identify_rs(bits: np.ndarray, candidates: list,
                 quick_codewords: int = 8, confirm_codewords: int = 64) -> list:
-    """Sweep RS candidates over bit offset (0..7) and symbol offset."""
+    """RS candidates over every bit offset (0..m-1) and symbol alignment in
+    one prefix-XOR scan, each alignment judged by the Early Verdict on its
+    clean-codeword indicators.  syndrome_zero_rate is the clean fraction
+    over up to confirm_codewords codewords at the winning alignment, rate
+    the same over the first quick_codewords (the scan needs no quick pass;
+    the key stays).  Ties go to the candidate with more distinct roots: a
+    stream that satisfies 32 roots also satisfies any 16 of them."""
     bits = np.asarray(bits, dtype=np.uint8)
-    hits = []
-    for cand in candidates:
-        rs = RSCode(cand["n"], cand["k"], prim=cand.get("prim", 0x11D),
-                    fcr=cand.get("fcr", 1), generator=cand.get("generator", 2))
-        m = rs.m
-        best = None
-        for bit_off in range(m):
-            symbols = bits_to_symbols(bits[bit_off:], m)
-            # sweep codeword alignment; short captures may hold only a few
-            # codewords, so test with whatever is available (>= 2)
-            max_sym_off = min(rs.n, max(0, len(symbols) - 2 * rs.n) + 1)
-            for sym_off in range(0, max_sym_off):
-                seg = symbols[sym_off: sym_off + rs.n * quick_codewords]
-                n_cw = len(seg) // rs.n
-                if n_cw < 2:
-                    break
-                cw = seg[: n_cw * rs.n].reshape(n_cw, rs.n)
-                syn = rs.syndromes(cw)
-                rate = float((syn == 0).all(axis=1).mean())
-                if rate > 0.5 and (best is None or rate > best["rate"]):
-                    best = {"bit_offset": bit_off, "symbol_offset": sym_off,
-                            "rate": rate}
-        if best:
-            # confirmation pass over many codewords
-            symbols = bits_to_symbols(bits[best["bit_offset"]:], m)
-            seg = symbols[best["symbol_offset"]:]
-            n_cw = min(len(seg) // rs.n, confirm_codewords)
-            cw = seg[: n_cw * rs.n].reshape(n_cw, rs.n)
-            syn = rs.syndromes(cw)
-            rate = float((syn == 0).all(axis=1).mean())
-            hits.append({**cand, **best, "syndrome_zero_rate": rate,
-                         "n_codewords_tested": n_cw})
-    hits.sort(key=lambda h: -h["syndrome_zero_rate"])
-    return hits
+    if not candidates:
+        return []
+    entries = [rs_entry(c) for c in candidates]
+    # enough codewords for the confirmation at every alignment
+    bits = bits[: (confirm_codewords + 2) * max(e["n"] * e["m"] for e in entries)]
+    found = [(cand, e, r) for cand, e, r in
+             zip(candidates, entries, probe_rs_many(bits, entries))
+             if r["early_verdict"]["verdict"] == "code"]
+    ranked = []
+    for cand, e, r in found:
+        # an error-free codeword of the true code satisfies all its roots,
+        # so a codeword clean for another candidate (same n, same
+        # alignment) but not for this one refutes it: a candidate sharing
+        # all roots but one (fcr 0 vs 1) otherwise passes a 1-in-256 window
+        # and the Early Verdict, planned against random data, accepts it
+        if any(o is not e and o["n"] == e["n"] and
+               (ro["bit_offset"], ro["symbol_offset"]) ==
+               (r["bit_offset"], r["symbol_offset"]) and
+               (ro["clean_sequence"] & ~r["clean_sequence"]).any()
+               for _, o, ro in found):
+            continue
+        seq = r["clean_sequence"][:confirm_codewords]
+        rate = float(seq.mean()) if len(seq) else 0.0
+        quick = seq[:quick_codewords]
+        ranked.append(((-rate, -len(np.unique(e["roots"]))),
+                       {**cand, "bit_offset": r["bit_offset"],
+                        "symbol_offset": r["symbol_offset"],
+                        "rate": float(quick.mean()) if len(quick) else 0.0,
+                        "syndrome_zero_rate": rate,
+                        "n_codewords_tested": int(len(seq)),
+                        "early_verdict": r["early_verdict"]}))
+    ranked.sort(key=lambda kh: kh[0])
+    return [h for _, h in ranked]
 
 
 def identify_fec(bits: np.ndarray, config,
                  try_rs: bool = True, try_ldpc: bool = True,
-                 try_conv: bool = True) -> list:
+                 try_conv: bool = True, llrs: np.ndarray = None) -> list:
     """Full FEC identification: returns ranked FECHypothesis list, always
-    ending with an explicit 'none' hypothesis."""
+    ending with an explicit 'none' hypothesis.  `llrs` (aligned with
+    `bits`, > 0 => bit 0) feed the probe and the soft Viterbi decode."""
     bits = np.asarray(bits, dtype=np.uint8)
+    soft = usable_llrs(llrs, len(bits))
     hyps = []
 
     conv_hits = identify_convolutional(
         bits, tuple(config.conv_constraint_lengths),
         config.conv_exhaustive_max_k, config.max_test_bits,
-        min_rate=config.min_syndrome_zero_rate) if try_conv else []
+        min_rate=config.min_syndrome_zero_rate, llrs=soft) if try_conv else []
     for hit in conv_hits[:3]:
         code = ConvCode(hit["K"], (hit["g1"], hit["g2"]))
         raw = bits[hit["offset"]:]
         raw = raw[: 2 * (len(raw) // 2)]
+        # soft decoding takes only the reliabilities: the signs follow the
+        # (possibly inverted) bits, so an inverted substream flips its LLRs
+        rel = None if soft is None else \
+            np.abs(soft[hit["offset"]:hit["offset"] + len(raw)])
         # resolve the substream inversion pattern: syndrome==0 admits
         # (none, both), syndrome==1 admits (v1 only, v2 only); pick the
         # pattern whose decode re-encodes onto the observed stream
         patterns = ((0, 0), (1, 1)) if not hit.get("syndrome_is_one") \
             else ((1, 0), (0, 1))
-        decoded, pre_ber, chosen = None, 1.0, None
+        decoded, pre_ber, chosen, n_cmp = None, 1.0, None, 0
         for inv1, inv2 in patterns:
             cand = raw.copy()
             if inv1:
                 cand[0::2] ^= 1
             if inv2:
                 cand[1::2] ^= 1
-            dec = viterbi_decode(cand, code)
+            dec = viterbi_decode(cand, code, soft=None if rel is None else
+                                 np.where(cand == 0, rel, -rel))
             re_enc = conv_encode(dec, code, terminate=False)
             L = min(len(re_enc), len(cand))
             ber = float((re_enc[:L] != cand[:L]).mean())
             if ber < pre_ber:
-                decoded, pre_ber, chosen = dec, ber, (inv1, inv2)
+                decoded, pre_ber, chosen, n_cmp = dec, ber, (inv1, inv2), L
             if ber < 0.02:
                 break
         if decoded is None or pre_ber > 0.2:
             # decode inconsistent with observed stream: reject (protects
             # against equivalent-but-wrong trellis descriptions)
             continue
+        if hit["syndrome_zero_rate"] < config.min_syndrome_zero_rate and \
+                not _decode_agrees(hit, pre_ber, n_cmp):
+            continue
         hyps.append(FECHypothesis(
             family="convolutional", code_rate=0.5,
             parameters={"K": hit["K"], "g1_octal": oct(hit["g1"]),
                         "g2_octal": oct(hit["g2"]), "rate": "1/2",
                         "stream_offset": hit["offset"],
-                        "substream_inversion": list(chosen)},
+                        "substream_inversion": list(chosen),
+                        "soft_decision": soft is not None,
+                        "early_verdict": hit["early_verdict"]},
             syndrome_zero_rate=hit["syndrome_zero_rate"],
             decoded_bits=decoded, pre_fec_ber=pre_ber,
             score=hit["syndrome_zero_rate"] * (1.0 - min(1.0, 2 * pre_ber))))
@@ -206,7 +300,8 @@ def identify_fec(bits: np.ndarray, config,
                         "prim": hex(hit.get("prim", 0x11D)),
                         "bit_offset": hit["bit_offset"],
                         "symbol_offset": hit["symbol_offset"],
-                        "n_codewords_tested": hit["n_codewords_tested"]},
+                        "n_codewords_tested": hit["n_codewords_tested"],
+                        "early_verdict": hit["early_verdict"]},
             syndrome_zero_rate=hit["syndrome_zero_rate"],
             decoded_bits=decoded,
             score=hit["syndrome_zero_rate"] * 0.98))
@@ -236,6 +331,18 @@ def identify_fec(bits: np.ndarray, config,
                                           if not hyps else "fallback"}))
     hyps.sort(key=lambda h: -h.score)
     return hyps
+
+
+def _decode_agrees(hit: dict, pre_ber: float, n_coded: int) -> bool:
+    """The decode's re-encode BER is within AGREE_SIGMAS (both readings'
+    sampling errors) plus AGREE_SLACK of the BER the hit's checks read."""
+    p_hat = hit["early_verdict"]["ber_estimate"]
+    if p_hat is None or p_hat >= 0.5:
+        return False
+    sd = np.hypot(ber_spread(2 * hit["syndrome_zero_rate"] - 1,
+                             hit["check_weight"], hit["n_checks"]),
+                  np.sqrt(pre_ber * (1 - pre_ber) / max(1, n_coded)))
+    return pre_ber <= p_hat + AGREE_SIGMAS * sd + AGREE_SLACK
 
 
 def identify_outer(inner: FECHypothesis, config) -> FECHypothesis:

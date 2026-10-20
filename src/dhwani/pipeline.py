@@ -22,7 +22,7 @@ from .params import estimate_parameters
 from .params.estimators import sample_rate_candidates
 from .modulation import classify_modulation
 from .demod import demodulate
-from .bits.ambiguity import enumerate_ambiguities
+from .bits.ambiguity import differential_decode, enumerate_ambiguities
 from .common.models import BitStream
 from .framing.frames import binary_autocorrelation, payload_stats
 from .hypothesis import bitlayer_search
@@ -458,16 +458,22 @@ class Analyzer:
 
 # ----------------------------------------------------------------------
 def _fsk_streams(demod) -> list:
+    """Normal/inverted x plain/differential, each with the LLRs that belong
+    to its own bits (inverted: negated; differential: box-plus)."""
     bits = demod.hard_bits
+    llrs = demod.llrs if (demod.llrs is not None and
+                          len(demod.llrs) == len(bits)) else None
     inv = (1 - bits).astype(np.uint8)
-    def diff(b):
-        d = np.bitwise_xor(b[1:], b[:-1])
-        return np.concatenate([[b[0]], d]).astype(np.uint8)
+    inv_llrs = None if llrs is None else -llrs
+    d_bits, d_llrs = differential_decode(bits, llrs)
+    di_bits, di_llrs = differential_decode(inv, inv_llrs)
     return [
-        BitStream(bits=bits, llrs=demod.llrs, hypothesis={"mapping": "normal"}),
-        BitStream(bits=inv, hypothesis={"mapping": "inverted"}),
-        BitStream(bits=diff(bits), hypothesis={"mapping": "normal", "differential": True}),
-        BitStream(bits=diff(inv), hypothesis={"mapping": "inverted", "differential": True}),
+        BitStream(bits=bits, llrs=llrs, hypothesis={"mapping": "normal"}),
+        BitStream(bits=inv, llrs=inv_llrs, hypothesis={"mapping": "inverted"}),
+        BitStream(bits=d_bits, llrs=d_llrs,
+                  hypothesis={"mapping": "normal", "differential": True}),
+        BitStream(bits=di_bits, llrs=di_llrs,
+                  hypothesis={"mapping": "inverted", "differential": True}),
     ]
 
 

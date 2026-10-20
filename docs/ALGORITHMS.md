@@ -81,7 +81,10 @@ m >= 8 a symbol-domain carrier estimate in the outer quarter of
 
 A blind loop locks to *a* constellation orientation, so every rotation,
 I/Q swap and differential interpretation becomes a candidate bit stream
-(FSK: normal/inverted x plain/differential).
+(FSK: normal/inverted x plain/differential). Each carries the S6 LLRs of
+its own bits (inverted: negated; differential: box-plus of the pair it
+XORs), and the bit layer moves them with the bits through descrambling
+and de-interleaving.
 
 ## S8-S10 bit layer (`hypothesis/engine.py`)
 
@@ -103,12 +106,25 @@ I/Q swap and differential interpretation becomes a candidate bit stream
   rank scan is flat (a short capture hides a 192-bit period). No inverse
   helps: `pseudo_random` with its period; other permutations are not
   searched.
-- **FEC** (`fec/`): convolutional codes by dual-code syndrome rate over
-  K and generator sweeps, then Viterbi with substream-inversion
-  resolution; Reed-Solomon by syndrome sweep over bit and symbol
-  alignment, decode via reedsolo; LDPC by candidate-set matching and
-  bit-flipping decode; RS outer code in the Viterbi output
-  (`identify_outer`) for concatenated codes.
+- **FEC** (`fec/`): the Code Registry (`registry.py`) compiles every
+  library code at import into its lightest dual-code checks (exact, from
+  the null space of a window's generator matrix) or its RS roots; the
+  Code Probe (`probe.py`) scores a check by the mean of prod tanh(L/2)
+  over its taps at every alignment and sign (idle runs skipped, many
+  checks per matrix product), and the Early Verdict, an SPRT (alpha
+  1e-6, beta 1e-3) checked against the whole stream's z, calls it code,
+  no code or undecided, with a BER read from the hard parities.
+  Convolutional codes: registry, standard and exhaustive K <= 7
+  candidates, "no code" dropped before a soft Viterbi decode with
+  substream-inversion resolution. A syndrome-zero rate >= 0.7 admits a
+  code as before; below it a "code" must stand 7 spreads above the
+  sweep's own wrong hypotheses of its check weight (text, repeated frames
+  and headers bias wrong checks of uncoded data) and its decode must
+  re-encode within sampling error of the BER its checks read; Reed-Solomon
+  (DVB RS(204,188) included): every bit offset and codeword alignment
+  from one prefix-XOR pass per root, decode via reedsolo; LDPC by
+  candidate-set matching and bit-flipping decode; RS outer code in the
+  Viterbi output (`identify_outer`) for concatenated codes.
 - **Framing** (`framing/`): binary autocorrelation and column stability
   give the frame length; the longest low-entropy column run is the sync;
   a bounded CRC hunt over the configured catalogue and positions; byte

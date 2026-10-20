@@ -30,6 +30,28 @@ def test_rs_roundtrip(rng):
     assert decoded[:223] == data
 
 
+def test_rs_shortened_204_188_roundtrip(rng):
+    """DVB RS(204,188): a shortened RS(255,239) still lives in GF(2^8)."""
+    rs = RSCode(204, 188, fcr=0)
+    assert rs.m == 8 and RSCode(255, 223).m == 8
+    assert RSCode(15, 11, prim=0x13).m == 4
+    data = bytes(rng.integers(0, 256, 188, dtype=np.uint8))
+    cw = bytearray(rs.encode(data))
+    assert len(cw) == 204
+    assert not rs.syndromes(np.frombuffer(bytes(cw), np.uint8)[None, :]).any()
+    cw[17] ^= 0xA5
+    cw[150] ^= 0x01
+    decoded, _ = rs.decode(bytes(cw))
+    assert decoded[:188] == data
+    # the field comes from the polynomial, also for n < 128
+    short = RSCode(120, 104)
+    assert short.m == 8
+    data = bytes(rng.integers(0, 256, 104, dtype=np.uint8))
+    cw = short.encode(data)
+    assert not short.syndromes(np.frombuffer(cw, np.uint8)[None, :]).any()
+    assert short.decode(cw)[0][:104] == data
+
+
 def test_identify_conv(config, rng):
     code = ConvCode(7, (0o171, 0o133))
     msg = rng.integers(0, 2, 8000).astype(np.uint8)

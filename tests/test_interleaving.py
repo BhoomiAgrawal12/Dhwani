@@ -26,6 +26,31 @@ def test_roundtrips(rng):
                           b[:len(b) // 64 * 64])
 
 
+def test_floats_keep_their_dtype_bits_stay_uint8(rng):
+    """LLR arrays go through the same inverses as the bits they belong to;
+    integer, bool and list input still comes back as uint8."""
+    b = rng.integers(0, 2, 8192).astype(np.uint8)
+    f = (1 - 2.0 * b) * rng.uniform(0.5, 3, len(b))
+    perm = rng.permutation(64)
+    pairs = ((block_interleave, block_deinterleave, (8, 16)),
+             (helical_interleave, helical_deinterleave, (8, 16, 3)),
+             (conv_interleave, conv_deinterleave, (4, 5)),
+             (pn_interleave, pn_deinterleave, (perm,)))
+    for fwd, inv, args in pairs:
+        for x in (b, f, f.astype(np.float32)):
+            keep = x.copy()
+            y, z = fwd(x, *args), inv(x, *args)
+            assert y.dtype == z.dtype == x.dtype
+            assert np.array_equal(x, keep)              # input untouched
+        assert np.array_equal(inv(f, *args) < 0, inv(b, *args) == 1)
+        assert np.array_equal(fwd(f, *args) < 0, fwd(b, *args) == 1)
+        for x in (b.astype(np.int64), b.astype(bool), list(b[:1024])):
+            for fn in (fwd, inv):
+                y = fn(x, *args)
+                assert y.dtype == np.uint8
+                assert np.array_equal(y, fn(np.asarray(x, np.uint8), *args))
+
+
 def test_identify_block(rng):
     inter = block_interleave(_coded(rng), 8, 16)
     top = identify_interleaver(inter, max_L=256)[0]

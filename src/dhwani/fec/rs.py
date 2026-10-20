@@ -30,7 +30,10 @@ class RSCode:
     generator: int = 2       # alpha
 
     def __post_init__(self):
-        self.m = (self.n + 1).bit_length() - 1
+        # the field is the one the polynomial generates: shortened codes
+        # (DVB's RS(204,188) is a shortened RS(255,239)) keep the full
+        # code's GF(2^8), whatever n
+        self.m = self.prim.bit_length() - 1
         self.t2 = self.n - self.k          # number of parity symbols = 2t
         self._build_tables()
 
