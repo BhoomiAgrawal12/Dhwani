@@ -324,13 +324,18 @@ class FECHypothesis:
     decoded_bits: Optional[np.ndarray] = field(default=None, repr=False)
     pre_fec_ber: Optional[float] = None
     score: float = 0.0
+    # Cross-check Gate (demod/cross_check.py): {"ber_evm", "ber_code",
+    # "consistent"}, consistent None when either BER is unknown (no
+    # verdict: test it with `is False`); None until the gate has run
+    cross_check: Optional[dict] = None
 
     def to_dict(self) -> dict:
         return {"family": self.family, "parameters": self.parameters,
                 "code_rate": self.code_rate,
                 "syndrome_zero_rate": self.syndrome_zero_rate,
                 "n_decoded_bits": 0 if self.decoded_bits is None else int(len(self.decoded_bits)),
-                "pre_fec_ber": self.pre_fec_ber, "score": self.score}
+                "pre_fec_ber": self.pre_fec_ber, "score": self.score,
+                "cross_check": self.cross_check}
 
 
 @dataclass

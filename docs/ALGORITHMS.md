@@ -189,6 +189,18 @@ and de-interleaving.
   and sync-anchored rotations when the first anchor misses. A frame is
   accepted only on a CRC pass or sync + column stability + enough
   frames.
+- **Cross-check Gate** (`demod/cross_check.py`): the accepted code's
+  Early Verdict BER may not exceed 4x the BER the S6 EVM implies plus
+  0.01, else the claim is a likely false detection (or carries errors the
+  Gaussian model does not see, such as bursts, slips or an uncoded
+  stretch): its FEC score is halved, the demodulation status S11 reads is
+  capped at DEGRADED and a warning names both numbers. The EVM model is
+  per-point nearest neighbours weighted by the label bits they flip, the
+  noise split over two axes for a complex table and all on the decision
+  axis for a real one (BPSK, OOK, ASK: exact for FM-receiver audio); both
+  give Q(1/EVM) for BPSK and QPSK. Without an EVM (the FSK and GMSK
+  receivers) or a code estimate no verdict is drawn:
+  `fec.cross_check.consistent` is null.
 
 ## S11 payload intelligence (`payload/`)
 
