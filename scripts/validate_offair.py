@@ -25,11 +25,14 @@ WAV the header's rate is scored (a mono IF WAV is analysed at fs/2).
 transmitter was not received); true expects at least one.
 
 Run:  python scripts/validate_offair.py [--manifest PATH] [--ml]
-Writes results/offair_report.json, labelled off-air.
+Writes results/offair_report.json, labelled off-air. Each case also
+records its signal_quality (S6 EVM, the SNR it implies, S6 status), which
+places it on the Proof Chart (scripts/plots.py).
 """
 import argparse
 import json
 import logging
+import math
 import os
 import sys
 import time
@@ -66,6 +69,20 @@ def observed(res) -> dict:
         "callsigns": (fr.crc or {}).get("callsigns") if fr else None,
         "sync_word_hex": fr.sync_word_hex if fr else None,
     }
+
+
+def signal_quality(res) -> dict:
+    """What the Proof Chart places a recording by: S6's EVM, the SNR it
+    implies (EVM^2 = N0/Es after the matched filter, so -20 log10(EVM)
+    reads Es/N0; Eb/N0 for uncoded BPSK), the S6 status and the modulation
+    S6 ran.  None where S6 did not run or measured no EVM (FSK, analog)."""
+    d = res.demodulation or {}
+    evm = d.get("evm_percent")
+    return {"evm_percent": evm,
+            "snr_db_evm": (round(-20 * math.log10(evm / 100.0), 1)
+                           if evm else None),
+            "demodulation_status": d.get("demodulation_status"),
+            "modulation_demodulated": d.get("modulation")}
 
 
 def matches(key, want, got) -> bool:
@@ -110,6 +127,7 @@ def score(entry: dict, analyzer, no_ml: bool) -> dict:
             "given": given,
             "checks": checks,
             "all_correct": bool(checks) and all(checks.values()),
+            "signal_quality": signal_quality(res),
             "warnings": res.warnings,
             "elapsed_s": round(time.perf_counter() - t0, 1)}
 

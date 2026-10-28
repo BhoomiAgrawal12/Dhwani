@@ -7,6 +7,7 @@ Run:  python scripts/render_readme.py            rewrite the block
 import json
 import os
 import sys
+from fractions import Fraction
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 README = os.path.join(ROOT, "README.md")
@@ -17,12 +18,12 @@ def _load(name):
     if name == "offair_report":
         p_offair = os.path.join(ROOT, "results", "offair", name + ".json")
         if os.path.exists(p_offair):
-            with open(p_offair) as f:
+            with open(p_offair, encoding="utf-8") as f:
                 return json.load(f)
     p = os.path.join(ROOT, "results", name + ".json")
     if not os.path.exists(p):
         return None
-    with open(p) as f:
+    with open(p, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -105,6 +106,14 @@ def render() -> str:
     else:
         out.append(_missing("python scripts/validate_bitlayer.py"))
 
+    d = _load("ber_report")
+    out.append("\n### Decoding proof (synthetic BER + off-air)\n")
+    if d:
+        out += _proof_table(d)
+        out.append("\n" + _source(d, "ber_report"))
+    else:
+        out.append(_missing("python scripts/benchmark_ber.py"))
+
     d = _load("samplerate_report")
     out.append("\n### Headerless sample-rate candidates (synthetic)\n")
     if d:
@@ -136,6 +145,54 @@ def render() -> str:
         out.append("_Measured on synthetic recordings; to score real "
                    "captures run `python scripts/validate_offair.py`._")
     return "\n".join(out)
+
+
+LOCK_LEVEL = 0.9        # "locks from": the lowest Eb/N0 with p_lock >= this
+BER_LEVEL = 1e-3        # "BER from": the lowest Eb/N0 with BER <= this
+
+
+def _proof_table(d) -> list:
+    """Per chain: code rate, the lowest Eb/N0 that locks >= 90% of frames,
+    the lowest with BER <= 1e-3 among locked frames, and the BER at the
+    highest point (an upper bound when it saw no errors)."""
+    s, chains = d["settings"], d["chains"]
+    top = max(s["ebn0_db"])
+    db = lambda x: f"{x:g} dB"
+    rows = [f"{s['frames']} frames per chain and Eb/N0 point through Dhwani's "
+            "own S1-S6 receiver; BER over the information bits of locked "
+            "frames only (a frame S2 does not detect, S6 gates as FAILED or "
+            "whose sync word is not found is a lock failure, not bit "
+            "errors)."]
+    chart = _chart("proof", "Bit error rate and probability of lock versus "
+                   "Eb/N0 per decoding chain, with off-air recordings at "
+                   "their EVM SNR")
+    if chart:
+        rows += chart
+        rows.append("\nOff-air markers: the recordings below at their EVM "
+                    "SNR; filled when fully correct, ringed when a CRC-valid "
+                    "frame was decoded.")
+    ber_txt = f"{BER_LEVEL:.0e}".replace("e-0", "e-")      # 1e-03 -> 1e-3
+    rows += ["", f"| chain | code rate | locks ≥ {LOCK_LEVEL:.0%} from | "
+             f"BER ≤ {ber_txt} from | BER at {db(top)} |",
+             "|---|---:|---:|---:|---:|"]
+    for c in chains.values():
+        pts = sorted(c["points"], key=lambda p: p["ebn0_db"])
+        lock = next((p["ebn0_db"] for p in pts if p["p_lock"] >= LOCK_LEVEL),
+                    None)
+        good = next((p["ebn0_db"] for p in pts if p.get("ber") is not None
+                     and p["ber"] <= BER_LEVEL), None)
+        last = pts[-1]
+        if last.get("ber") is None:
+            at_top = "no frame locked"
+        elif not last["bit_errors"]:
+            at_top = f"< {last['ber_upper_95']:.1e} (0 errors)"
+        else:
+            at_top = f"{last['ber']:.1e}"
+        rate = Fraction(c["code_rate"]).limit_denominator(16)
+        rows.append(f"| {c['label']} | {rate} | "
+                    f"{db(lock) if lock is not None else '-'} | "
+                    f"{db(good) if good is not None else '-'} | {at_top} |")
+    return rows
 
 
 def _offair_table(cases) -> list:
@@ -176,7 +233,9 @@ def _offair_table(cases) -> list:
 
 def main(argv=None):
     check = "--check" in (argv if argv is not None else sys.argv[1:])
-    with open(README) as f:
+    # UTF-8 explicitly: the block carries non-ASCII marks, and a platform
+    # default (cp1252 on Windows) misreads or cannot write them
+    with open(README, encoding="utf-8") as f:
         text = f.read()
     i, j = text.index(BEGIN) + len(BEGIN), text.index(END)
     new = text[:i] + "\n" + render() + "\n" + text[j:]
@@ -186,7 +245,7 @@ def main(argv=None):
                   "python scripts/render_readme.py")
             return 1
         return 0
-    with open(README, "w") as f:
+    with open(README, "w", encoding="utf-8") as f:
         f.write(new)
     return 0
 

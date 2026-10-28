@@ -305,3 +305,214 @@ def test_matrix_case_records_s5_confidence(config):
     row = vm.run_case("BPSK", 25, 7, config, Analyzer(config, use_cache=False),
                       False)
     assert 0.0 <= row["confidence"] <= 1.0
+
+
+def test_benchmark_ber_frame_sync_by_known_word():
+    """Proof Chart data: the known sync word is found in whichever S7
+    stream the carrier lock left it (here a conjugated quarter turn), and
+    refused once more than a quarter of its bits are wrong."""
+    import numpy as np
+    import benchmark_ber as bb
+    from dhwani.bits.ambiguity import enumerate_ambiguities
+    from dhwani.demod.constellations import bits_to_iq_symbols
+    rng = np.random.default_rng(5)
+    pre = rng.integers(0, 2, 200).astype(np.uint8)
+    pay = rng.integers(0, 2, 400).astype(np.uint8)
+    sync = bb.SYNC_BITS
+    syms = np.conj(bits_to_iq_symbols(np.concatenate([pre, sync, pay]),
+                                      "QPSK")) * 1j
+    streams = enumerate_ambiguities(syms, "QPSK", include_differential=False)
+    hit = bb.find_sync(streams, sync, len(pay))
+    assert hit is not None
+    i, start, errors = hit
+    assert errors == 0
+    assert np.array_equal(streams[i].bits[start:start + len(pay)], pay)
+    bad = sync.copy()
+    bad[:len(sync) // 4 + 1] ^= 1
+    syms = bits_to_iq_symbols(np.concatenate([pre, bad, pay]), "QPSK")
+    assert bb.find_sync(enumerate_ambiguities(
+        syms, "QPSK", include_differential=False), sync, len(pay)) is None
+
+
+def test_benchmark_ber_quick_writes_report(tmp_path, monkeypatch):
+    """Proof Chart data: benchmark_ber --quick writes ber_report.json with
+    provenance, every chain at every point with its lock bookkeeping, and
+    the uncoded theory curve; uncoded QPSK at 10 dB locks every frame."""
+    import math
+    import benchmark_ber as bb
+    monkeypatch.setattr(provenance, "RESULTS", str(tmp_path))
+    assert bb.main(["--quick"]) == 0
+    d = json.load(open(tmp_path / "ber_report.json"))
+    assert d["provenance"]["data"].startswith("synthetic")
+    s = d["settings"]
+    assert s["quick"] and s["frames"] == 2 and len(s["ebn0_db"]) == 2
+    assert "seed" in s
+    assert set(d["chains"]) == {"uncoded", "conv_k7", "ldpc_648"}
+    keys = {"ebn0_db", "esn0_db", "frames", "locked", "lock_failures",
+            "lock_failure_reasons", "p_lock", "p_lock_ci95", "bits",
+            "bit_errors", "ber", "ber_upper_95"}
+    for c in d["chains"].values():
+        assert c["label"] and 0 < c["code_rate"] <= 1
+        assert c["seconds_per_frame"] > 0
+        assert [p["ebn0_db"] for p in c["points"]] == s["ebn0_db"]
+        for p in c["points"]:
+            assert keys <= set(p)
+            assert p["locked"] + p["lock_failures"] == p["frames"] == 2
+            assert sum(p["lock_failure_reasons"].values()) == p["lock_failures"]
+            if p["bits"] and not p["bit_errors"]:
+                assert p["ber"] == 0.0
+                assert math.isclose(p["ber_upper_95"], 3 / p["bits"],
+                                    rel_tol=1e-4)
+    for p in d["theory"]["points"]:
+        assert math.isclose(p["ber"], 0.5 * math.erfc(
+            math.sqrt(10 ** (p["ebn0_db"] / 10))), rel_tol=1e-4)
+    top = d["chains"]["uncoded"]["points"][-1]
+    assert top["ebn0_db"] == 10 and top["locked"] == 2 and top["ber"] < 1e-2
+
+
+def _ber_report_fixture():
+    def pt(x, frames, locked, bits, errors):
+        return {"ebn0_db": x, "esn0_db": x, "frames": frames,
+                "locked": locked, "lock_failures": frames - locked,
+                "lock_failure_reasons": {"no_detection": frames - locked,
+                                         "demod_failed": 0, "no_sync": 0},
+                "p_lock": locked / frames, "p_lock_ci95": [0.0, 1.0],
+                "bits": bits, "bit_errors": errors,
+                "ber": errors / bits if bits else None,
+                "ber_upper_95": 3 / bits if bits and not errors else None}
+    return {
+        "provenance": {"data": "synthetic (benchmark_ber)", "git_commit": "abc",
+                       "cpu": "cpu", "python": "3", "generated_utc": "t"},
+        "settings": {"ebn0_db": [0, 5, 10], "frames": 4,
+                     "info_bits_per_frame": 2592},
+        "chains": {
+            "uncoded": {"label": "uncoded QPSK", "code_rate": 1.0, "points": [
+                pt(0, 4, 0, 0, 0), pt(5, 4, 2, 5184, 30),
+                pt(10, 4, 4, 10368, 0)]},
+            "ldpc_648": {"label": "LDPC 802.11n n=648 r1/2", "code_rate": 0.5,
+                         "points": [pt(0, 4, 0, 0, 0), pt(5, 4, 4, 10368, 0),
+                                    pt(10, 4, 4, 10368, 0)]}},
+        "theory": {"chain": "uncoded", "points": [
+            {"ebn0_db": 0, "ber": 0.0786}, {"ebn0_db": 5, "ber": 0.00596},
+            {"ebn0_db": 10, "ber": 3.87e-06}]}}
+
+
+def test_proof_chart_from_result_files(tmp_path, monkeypatch):
+    """Proof Chart: BER and lock panels drawn from ber_report.json with the
+    off-air recordings placed at their EVM SNR; zero-error points are upper
+    bounds and say so; recordings without an EVM are left out."""
+    import xml.dom.minidom
+    import plots
+    res = tmp_path / "results"
+    (res / "offair").mkdir(parents=True)
+    (res / "ber_report.json").write_text(json.dumps(_ber_report_fixture()))
+    q = lambda evm, snr, status, mod: {
+        "evm_percent": evm, "snr_db_evm": snr, "demodulation_status": status,
+        "modulation_demodulated": mod}
+    (res / "offair" / "offair_report.json").write_text(json.dumps({
+        "provenance": {"git_commit": "abc"}, "cases": [
+            {"file": "results/offair/recordings/entrysat.wav",
+             "all_correct": True, "decoded": {"crc": "CRC-16-X25", "frames": 1},
+             "signal_quality": q(10.0, 20.0, "GOOD", "BPSK")},
+            {"file": "results/offair/recordings/lilacsat1.wav",
+             "all_correct": False, "decoded": {"crc": None, "frames": None},
+             "signal_quality": q(50.0, 6.0, "FAILED", "BPSK")},
+            {"file": "results/offair/recordings/ty_2.wav", "all_correct": True,
+             "decoded": {"crc": None, "frames": None},
+             "signal_quality": q(None, None, "GOOD", "2FSK")},
+            {"file": "older_report_entry.wav", "all_correct": True,
+             "decoded": {}}]}))
+    monkeypatch.setattr(plots, "RESULTS", str(res))
+    monkeypatch.setattr(plots, "OUT", str(res / "charts"))
+    plots.main()
+    svg = (res / "charts" / "proof.svg").read_text()
+    xml.dom.minidom.parseString(svg)
+    for text in ("uncoded QPSK", "LDPC 802.11n n=648 r1/2", "theory",
+                 "0 errors", "entrysat", "20.0 dB", "lilacsat1"):
+        assert text in svg, text
+    assert "ty_2" not in svg and "older_report_entry" not in svg
+    # without an off-air report the chart still draws
+    xml.dom.minidom.parseString(plots.proof_chart(_ber_report_fixture(), None))
+
+
+def test_readme_renders_decoding_proof_section(tmp_path, monkeypatch):
+    """Proof Chart in the README: its own section after the bit-layer one,
+    numbers only from ber_report.json, 'Not generated yet' without it."""
+    import render_readme as rr
+    (tmp_path / "results" / "charts").mkdir(parents=True)
+    monkeypatch.setattr(rr, "ROOT", str(tmp_path))
+    text = rr.render()
+    assert (text.index("### Interleaver and FEC") <
+            text.index("### Decoding proof") < text.index("### Headerless"))
+    section = text.split("### Decoding proof")[1].split("\n### ")[0]
+    assert "Not generated yet: run `python scripts/benchmark_ber.py`" in section
+    (tmp_path / "results" / "ber_report.json").write_text(
+        json.dumps(_ber_report_fixture()))
+    (tmp_path / "results" / "charts" / "proof.svg").write_text("<svg/>")
+    section = rr.render().split("### Decoding proof")[1].split("\n### ")[0]
+    assert "Not generated yet" not in section
+    assert "(results/charts/proof.svg)" in section
+    assert "| uncoded QPSK | 1 | 10 dB | 10 dB |" in section
+    assert "| LDPC 802.11n n=648 r1/2 | 1/2 | 5 dB | 5 dB |" in section
+    assert "`results/ber_report.json`" in section
+
+
+def test_offair_records_signal_quality(tmp_path, monkeypatch):
+    """Proof Chart off-air points: each recording also records its signal
+    quality (EVM, the SNR it implies, S6 status, the modulation S6 ran) as
+    new keys beside the existing ones."""
+    import math
+    import validate_offair as vo
+    from dhwani.synth.factory import WaveformFactory
+    from dhwani.synth.writers import write_recording
+    monkeypatch.setattr(provenance, "RESULTS", str(tmp_path))
+    monkeypatch.setattr(vo, "ROOT", str(tmp_path))
+    iq, gt = WaveformFactory(seed=99).generate(
+        modulation="QPSK", sps=8.0, snr_db=22.0, cfo_norm=0.006,
+        phase_offset=0.5, fec={"family": "convolutional", "K": 7},
+        interleaver={"kind": "block", "rows": 8, "cols": 16},
+        scrambler={"kind": "known_whitening", "name": "PN9-CC1101"},
+        n_frames=80)
+    write_recording(iq, gt, str(tmp_path / "r.wav"), sample_rate=1e6)
+    (tmp_path / "m.json").write_text(json.dumps([{
+        "file": "r.wav", "license": "synthetic test stand-in",
+        "expect": {"modulation": "QPSK", "symbol_rate_hz": 125000}}]))
+    assert vo.main(["--manifest", str(tmp_path / "m.json")]) == 0
+    case = json.load(open(tmp_path / "offair_report.json"))["cases"][0]
+    for k in ("observed", "checks", "decoded", "all_correct"):
+        assert k in case
+    assert case["checks"] == {"modulation": True, "symbol_rate_hz": True}
+    q = case["signal_quality"]
+    assert q["modulation_demodulated"] == "QPSK"
+    assert q["demodulation_status"] in ("GOOD", "DEGRADED")
+    assert 0 < q["evm_percent"] < 20
+    assert math.isclose(q["snr_db_evm"],
+                        -20 * math.log10(q["evm_percent"] / 100), abs_tol=0.05)
+
+
+def test_offair_signal_quality_without_evm():
+    """No demodulation (nothing detected) or no EVM (FSK, analog): the
+    signal-quality keys are there with None, nothing is invented."""
+    import validate_offair as vo
+    from dhwani.common.models import AnalysisResult
+
+    class Stub:
+        def __init__(self, demod):
+            self.demod = demod
+
+        def analyze(self, *a, **k):
+            r = AnalysisResult(recording_meta={
+                "sample_rate": 48000.0, "sample_rate_source": "wav_header"})
+            r.demodulation = self.demod
+            return r
+
+    e = {"file": "x.wav", "license": "test", "expect": {"modulation": "2FSK"}}
+    assert vo.score(e, Stub(None), True)["signal_quality"] == {
+        "evm_percent": None, "snr_db_evm": None,
+        "demodulation_status": None, "modulation_demodulated": None}
+    q = vo.score(e, Stub({"modulation": "2FSK", "demodulation_status": "GOOD",
+                          "evm_percent": None}), True)["signal_quality"]
+    assert q["snr_db_evm"] is None and q["demodulation_status"] == "GOOD"
+    q = vo.score(e, Stub({"modulation": "BPSK", "demodulation_status": "GOOD",
+                          "evm_percent": 10.0}), True)["signal_quality"]
+    assert q["snr_db_evm"] == 20.0 and q["modulation_demodulated"] == "BPSK"

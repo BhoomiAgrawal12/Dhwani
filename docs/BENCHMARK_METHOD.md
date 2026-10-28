@@ -62,6 +62,53 @@ payloads recovered.
 Licensed real recordings listed in a manifest with the parameters known
 for them; per recording, which expected parameters were reproduced.
 Labelled off-air. Nothing is reported until such recordings are added.
+Each recording also records its `signal_quality`: S6's EVM, the SNR it
+implies (-20 log10 EVM), the S6 status and the modulation S6 ran; the
+Proof Chart places it by these.
+
+## `results/ber_report.json` (`scripts/benchmark_ber.py`)
+
+Bit error rate against Eb/N0 (0 to 10 dB, 1 dB steps) through Dhwani's
+own receiver, for three chains: uncoded QPSK (hard decisions), the
+convolutional K=7 (171,133) rate-1/2 code (terminated, soft-decision
+Viterbi) and the 802.11n LDPC code n=648 rate 1/2 (the Layered Decoder).
+Every frame is: random information bits, encoded, then a burst of a
+random preamble (640 symbols, so S6 has settled before the sync word), a
+known 64-bit sync word (0x034776C7272895B0), the coded payload (about
+2592 QPSK symbols for every chain: 8 LDPC codewords, the convolutional
+code's 2592 information bits, or 5184 uncoded bits) and a 64-symbol
+random tail; QPSK with RRC pulse shaping (8 samples/symbol, rolloff 0.35,
+the factory's filter), carrier offset 0.004 cycles/sample with a random
+phase and a random fractional timing offset, AWGN, and 4000 noise-only
+samples each side. The noise is set from the burst's measured energy
+per symbol so that Es/N0 = Eb/N0 + 10 log10(2 R) exactly, R the
+payload's information bits per coded bit.
+
+The receiver is the stage calls `pipeline.py` makes: S1 condition, S2
+detect (segment 0), S3 channelize, S4 parameters, S6 demodulate with S4's
+samples per symbol and carrier offset; the modulation is pinned to QPSK
+(classification is not measured here). Frame sync uses the known sync
+word: it is compared at every bit offset of the eight S7 ambiguity
+streams (4 rotations x conjugation), and the best match is accepted with
+at most 16 of its 64 bits wrong; that stream's bits and LLRs go to the
+decoder. So the curve measures demodulation plus decoding, not blind
+identification.
+
+A frame is a lock failure, not bit errors, when S2 detects nothing, S6
+says FAILED (its quality gate withholds the bits, as in the pipeline) or
+the sync word is not found; the report counts each reason. BER is over
+the information bits of locked frames only; a point with no errors
+reports BER 0 and the 95% upper bound 3/bits. `p_lock` = locked / frames
+with its Wilson 95% interval. `theory` is uncoded Gray QPSK,
+0.5 erfc(sqrt(Eb/N0)). Each frame has its own seed (seed, chain, Eb/N0
+in tenths of a dB, frame), recorded in `settings` with the frame count;
+`seconds_per_frame` is the measured cost per chain.
+
+`scripts/plots.py` draws it as `results/charts/proof.svg`: BER (log)
+and probability of lock against Eb/N0, with the off-air recordings in the
+lock panel at their EVM SNR (Eb/N0 = Es/N0 for the uncoded recordings),
+filled when fully correct, ringed when a CRC-valid frame was decoded.
+Recordings without an EVM (no signal, FSK, analog) are not placed.
 
 ## What is not measured
 
