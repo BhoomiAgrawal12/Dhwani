@@ -79,7 +79,12 @@ def test_registry_checks_hold_on_own_encoder_output(rng):
     k3t = registry.REGISTRY["conv K3 r1/3 (5,7,7)"]
     assert np.array_equal(k3t["checks"][0]["taps"], [1, 2])
     assert registry.REGISTRY["conv K7 r3/4 (171,133)"]["period"] == 4
-    assert registry.ldpc_entries() == []
+    # the bundled LDPC codes are registered beside REGISTRY: the LDPC
+    # Pre-screen scores them per codeword alignment, not probe_entries
+    assert [e["name"] for e in registry.ldpc_entries()] == [
+        "802.11n 648 r1/2", "802.11n 648 r3/4", "AR4JA k1024 r1/2",
+        "AR4JA k1024 r4/5"]
+    assert not set(registry.LDPC_REGISTRY) & set(registry.REGISTRY)
 
 
 def test_registry_rs_entries():

@@ -19,15 +19,34 @@ and the encoder emits out[t*n + j] = v_j[t].
 
 Reed-Solomon codes become their root exponents (generator^(fcr+j)) plus
 GF(2^m) tables shared per field polynomial; the probe tests every
-alignment from them in one pass.  LDPC codes join in a later commit.
-Everything is built in memory here: no file I/O at analysis time.
+alignment from them in one pass.
+
+LDPC codes are the matrices bundled under fec/codes (index.json is the
+catalogue, with sources): 802.11n n = 648 at rate 1/2 and 3/4, and CCSDS
+AR4JA with k = 1024.  The "AR4JA n = 1280" of the plan is the rate-4/5
+code (H 384 x 1408, the last 128 columns punctured); the rate-1/2 code
+sends n = 2048 (H 1536 x 2560, the last 512 punctured), so both are
+bundled.  Each becomes its sparse edge list (rows, cols), its decoder
+layers, its punctured columns and its probe checks (the lightest checks
+on sent bits, grouped by weight as (checks, weight) tap arrays).  They
+live in LDPC_REGISTRY beside REGISTRY: the LDPC Pre-screen scores them
+per codeword alignment, not probe_entries' per-phase sweep.  The
+configured seeded candidates and any other matrix file are registered on
+demand (ldpc_entry) and cached.  Everything bundled is read and built
+here, at import: no file I/O at analysis time unless a candidate names a
+matrix file.
 """
 from __future__ import annotations
+
+import json
+import logging
+import os
 
 import numpy as np
 
 from ..common.config import FECConfig
 from .conv import ConvCode, conv_encode
+from .ldpc import LDPCCode, read_code
 
 # 2^12 combinations per code: for every entry below, dimensions 12..20 give
 # the same minimum and odd-check weights and 12..18 the same kept checks
@@ -249,6 +268,69 @@ def rs_entries() -> list:
     return [e for e in REGISTRY.values() if e["family"] == "reed_solomon"]
 
 
+CODES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "codes")
+
+
+def _ldpc_entry(code: LDPCCode, **extra) -> dict:
+    s = code.structure()
+    return {"name": code.name, "family": "ldpc", "n": code.n, "k": code.k,
+            "n_full": code.n_full, "m": code.m, "punctured": s["punctured"],
+            "rows": s["rows"], "cols": s["cols"], "checks": s["checks"],
+            "check_weight": s["check_weight"], "layers": s["layers"],
+            "seed": code.seed, "code": code, **extra}
+
+
+def _bundled_ldpc() -> dict:
+    """The catalogue's codes; "punctured" there counts the last columns of
+    H that are never sent.  Without the data files (a copy installed
+    without its package data) there are none, and every other code family
+    still works."""
+    try:
+        with open(os.path.join(CODES_DIR, "index.json")) as f:
+            index = json.load(f)
+    except OSError as exc:
+        logging.getLogger(__name__).warning("no bundled LDPC codes: %s", exc)
+        return {}
+    out = {}
+    for item in index:
+        code = read_code(os.path.join(CODES_DIR, item["file"]), item["name"],
+                         item["punctured"])
+        if (code.n, code.k) != (item["n"], item["k"]):
+            raise ValueError(f"{item['file']}: n, k = {code.n}, {code.k}, the "
+                             f"catalogue says {item['n']}, {item['k']}")
+        out[item["name"]] = _ldpc_entry(code, standard=item["standard"],
+                                        source=item["source"], file=item["file"])
+    return out
+
+
+LDPC_REGISTRY: dict = _bundled_ldpc()
+_LDPC_CACHE = {}       # seeded codes and matrix files, registered on demand
+
+
 def ldpc_entries() -> list:
-    """Bundled LDPC matrices are registered in a later commit."""
-    return []
+    """The bundled LDPC codes, in catalogue order."""
+    return list(LDPC_REGISTRY.values())
+
+
+def ldpc_entry(cand: dict) -> dict:
+    """Registry entry for an LDPC candidate, built once and cached: a
+    bundled code by "name"; a matrix file by "path" (.qc or .alist, with
+    an optional "name" and "punctured", the count of last columns never
+    sent); otherwise the seeded construction {"n", "k", "seed"}, where a
+    "name" is only a label (as before)."""
+    name = cand.get("name")
+    if isinstance(name, str) and name in LDPC_REGISTRY:
+        return LDPC_REGISTRY[name]
+    if "path" in cand:
+        key = ("path", os.path.abspath(cand["path"]), name,
+               int(cand.get("punctured", 0)))
+        if key not in _LDPC_CACHE:
+            _LDPC_CACHE[key] = _ldpc_entry(read_code(cand["path"], name, key[3]))
+        return _LDPC_CACHE[key]
+    if "n" not in cand or "k" not in cand:
+        raise ValueError(f"LDPC candidate {cand!r}: give n and k (seeded), a "
+                         f"path, or a bundled name: {', '.join(LDPC_REGISTRY)}")
+    key = (int(cand["n"]), int(cand["k"]), int(cand.get("seed", 1)))
+    if key not in _LDPC_CACHE:
+        _LDPC_CACHE[key] = _ldpc_entry(LDPCCode(*key))
+    return _LDPC_CACHE[key]

@@ -146,9 +146,43 @@ and de-interleaving.
   and headers bias wrong checks of uncoded data) and its decode must
   re-encode within sampling error of the BER its checks read; Reed-Solomon
   (DVB RS(204,188) included): every bit offset and codeword alignment
-  from one prefix-XOR pass per root, decode via reedsolo; LDPC by
-  candidate-set matching and bit-flipping decode; RS outer code in the
-  Viterbi output (`identify_outer`) for concatenated codes.
+  from one prefix-XOR pass per root, decode via reedsolo; LDPC
+  (`ldpc.py`) from a set of known matrices read from `.qc` / `.alist`
+  files: bundled 802.11n n = 648 (rate 1/2 and 3/4) and CCSDS AR4JA
+  k = 1024 at rate 1/2 (2048 of 2560 bits sent) and rate 4/5 (the
+  "n = 1280" AR4JA code: 1280 of 1408 sent), plus the configured seeded
+  candidates and any matrix file given by path (`{"path": ...}`). An
+  empty `ldpc_candidates` still turns LDPC off; `fec.ldpc_bundled`
+  (default `null`: the bundled codes join a non-empty list) set to `true`
+  scans the bundled codes even then, `false` never (the listed
+  candidates only, as before). The Pre-screen scores every code at every codeword
+  alignment and both polarities with its lightest checks (for AR4JA, row
+  sums that cancel the punctured bits) over at least 8 codewords, about
+  2048 check values per alignment (AR4JA r1/2 reads its 512 lightest
+  checks whole, AR4JA r4/5 16 codewords); the Early Verdict may start at
+  any of the first four codewords (a preamble before the first whole
+  codeword). Only the best "code" that stands 7 spreads above the scan's
+  other hypotheses goes on; its alignment is then settled among its
+  neighbours, because a window a bit off a quasi-cyclic codeword is the
+  codeword with every circulant rotated except at the circulant
+  boundaries (one bit off, 97% of AR4JA r1/2's checks still hold and the
+  decoder converges onto the rotated codewords): the confirmation over 64
+  codewords and every probe check picks the alignment, and for a noisy
+  stream the neighbours' decodes do (the rotated codewords also flip
+  half of the boundary bits). The decoder is layered offset min-sum
+  (offset 0.15, then scale 0.8, at most 30 iterations, punctured bits at
+  LLR 0, soft when LLRs are aligned); below the old clean-codeword gate
+  it must converge on half of the first 64 codewords. An inverted hit
+  (the complement satisfies the code) is left to the bit layer's
+  polarity fan-out. Measured through `identify_fec` at an unknown offset
+  over 40 kbit (BPSK, 40 seeds; the rest are missed, none reported at a
+  wrong alignment): with soft LLRs AR4JA r1/2 37/40 at Eb/N0 2.0 dB,
+  AR4JA r4/5 39/40 at 3.5 dB, 802.11n r1/2 40/40 at 2.0 dB; with hard
+  bits AR4JA r1/2 39/40 at 3.0 dB; with QPSK S6 LLRs AR4JA r1/2 36/40 at
+  2.5 dB and r4/5 40/40 at 4.0 dB. Detection therefore lags the decoder
+  by about 0.5 dB on AR4JA (its checks are heavy: weight 11 at rate 1/2,
+  33 at 4/5). RS outer code in the Viterbi output (`identify_outer`) for
+  concatenated codes.
 - **Framing** (`framing/`): binary autocorrelation and column stability
   give the frame length; the longest low-entropy column run is the sync;
   a bounded CRC hunt over the configured catalogue and positions; byte

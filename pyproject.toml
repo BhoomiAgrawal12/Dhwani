@@ -28,5 +28,9 @@ dhwani-gui = "dhwani.gui.app:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+# bundled LDPC parity-check matrices (.qc / .alist) and their catalogue
+"dhwani.fec" = ["codes/*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

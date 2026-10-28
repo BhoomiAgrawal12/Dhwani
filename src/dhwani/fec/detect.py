@@ -19,6 +19,13 @@ Reed-Solomon: the probe's prefix-XOR scan tests every bit offset and
 codeword alignment of every candidate at once; each alignment's
 clean-codeword indicators get the same Early Verdict.
 
+LDPC: the Pre-screen (ldpc.py) scores the configured candidates and the
+bundled codes at every codeword alignment and passes at most one (code,
+alignment) on; the layered min-sum decoder (soft when LLRs are aligned)
+then has to converge on half the codewords, unless enough of them were
+clean as received, and first settles the alignment of a noisy stream
+among its neighbours (a quasi-cyclic code converges one bit off too).
+
 The returned hypotheses carry `syndrome_zero_rate` - the objective
 confidence metric that drives the retry loop, for convolutional codes
 the fraction of zero syndromes of the best check, (1 + its hard mean)/2 -
@@ -34,11 +41,11 @@ import numpy as np
 from ..common.models import FECHypothesis
 from .conv import ConvCode, STANDARD_CODES, viterbi_decode, conv_encode
 from .rs import RSCode, bits_to_symbols
-from .ldpc import identify_ldpc
+from .ldpc import identify_ldpc, settle_offset
 from .probe import (DECOY_Z, MIN_CHECKS, ber_spread, decoy_null,
                     probe_checks, probe_pairs, probe_rs_many, row_best,
                     soft_values, stream_stats, summarize, usable_llrs)
-from .registry import basic_check, conv_entries, rs_entry
+from .registry import basic_check, conv_entries, ldpc_entries, rs_entry
 
 # A code admitted below min_rate must explain the stream: the ML decode of
 # a true code is never further from the received bits than the codeword
@@ -48,6 +55,18 @@ from .registry import basic_check, conv_entries, rs_entry
 # reads a low BER that no decode reaches (measured: 11 to 85 sigma off).
 AGREE_SIGMAS = 4.0     # sampling error allowed between the two BER readings
 AGREE_SLACK = 0.005    # plus this: soft-decision decodes, slightly bursty errors
+# an LDPC code with no clean codeword as received is kept when its layered
+# decode converges on this fraction of the codewords: a wrong code (or
+# random data) essentially never converges, and half still admits a stream
+# near the code's decoding threshold.  A neighbouring alignment of a
+# quasi-cyclic code does converge (onto the rotated codewords), which is
+# why settle_offset compares the neighbours first.
+LDPC_MIN_CONVERGED = 0.5
+# a noisy stream's decode is tried on this many codewords before the rest
+# (the Pre-screen's confirmation length): a code the decoder cannot correct
+# is dropped at about 1/8 of the cost on a 400 kbit 802.11n stream
+LDPC_TRIAL_BLOCKS = 64
+LDPC_MAX_BLOCKS = 4096      # decode_stream's default, as before
 
 
 @functools.lru_cache(maxsize=8)
@@ -306,25 +325,51 @@ def identify_fec(bits: np.ndarray, config,
             decoded_bits=decoded,
             score=hit["syndrome_zero_rate"] * 0.98))
 
-    # LDPC: candidate-set matching (skipped when a confident hit exists)
+    # LDPC: the Pre-screen picks (code, alignment) among the configured
+    # candidates and the bundled codes before any decode (skipped when a
+    # confident hit exists or no LDPC candidate is configured, as before;
+    # config.ldpc_bundled: None adds the bundled codes to a non-empty list,
+    # True also to an empty one, False never).
+    # A clean-codeword fraction of half min_rate admits a code as before;
+    # below it (a noisy stream has no clean codeword) the layered decode
+    # must converge on half the codewords, and the hypothesis reports the
+    # decoded zero-syndrome fraction (clean_codeword_rate keeps the other)
     best_so_far = max((h.syndrome_zero_rate or 0) for h in hyps) if hyps else 0.0
-    if try_ldpc and best_so_far < 0.9 and getattr(config, "ldpc_candidates", None):
-        for hit in identify_ldpc(bits, config.ldpc_candidates)[:2]:
-            if hit["syndrome_zero_rate"] < config.min_syndrome_zero_rate * 0.5:
+    cands = list(getattr(config, "ldpc_candidates", None) or [])
+    bundled = getattr(config, "ldpc_bundled", None)
+    if bundled or (bundled is None and cands):
+        listed = {c.get("name") for c in cands}
+        cands += [{"name": e["name"]} for e in ldpc_entries()
+                  if e["name"] not in listed]
+    if try_ldpc and best_so_far < 0.9 and cands:
+        for hit in identify_ldpc(bits, cands, min_rate=None, llrs=soft)[:2]:
+            if hit["inverted"]:
+                # the complemented stream satisfies the code: the bit layer
+                # tries that stream itself (S7's polarity fan-out), and
+                # taking it here would report the winning rotation 180
+                # degrees off
                 continue
-            code = hit["code"]
-            decoded, converged = code.decode_stream(bits, hit["offset"])
+            clean = hit["syndrome_zero_rate"] >= config.min_syndrome_zero_rate * 0.5
+            dec = _ldpc_decode(hit["code"], bits, hit["offset"], soft, clean)
+            if dec is None:
+                continue
+            offset, decoded, converged, pre_ber = dec
+            szr = hit["syndrome_zero_rate"] if clean else converged
             hyps.append(FECHypothesis(
                 family="ldpc", code_rate=hit["k"] / hit["n"],
                 parameters={"n": hit["n"], "k": hit["k"],
                             "seed": hit.get("seed", 1),
-                            "offset": hit["offset"],
+                            "offset": offset,
                             "decode_converged_rate": round(converged, 3),
                             "note": "candidate-set match (H known a priori); "
-                                    "arbitrary H reconstruction is out of scope"},
-                syndrome_zero_rate=hit["syndrome_zero_rate"],
-                decoded_bits=decoded,
-                score=hit["syndrome_zero_rate"] * 0.97))
+                                    "arbitrary H reconstruction is out of scope",
+                            "name": hit["name"],
+                            "clean_codeword_rate": hit["syndrome_zero_rate"],
+                            "soft_decision": soft is not None,
+                            "early_verdict": hit["early_verdict"]},
+                syndrome_zero_rate=szr,
+                decoded_bits=decoded, pre_fec_ber=pre_ber,
+                score=szr * 0.97))
 
     hyps.append(FECHypothesis(family="none", score=0.2,
                               parameters={"reason": "no code identified above threshold"
@@ -343,6 +388,31 @@ def _decode_agrees(hit: dict, pre_ber: float, n_coded: int) -> bool:
                              hit["check_weight"], hit["n_checks"]),
                   np.sqrt(pre_ber * (1 - pre_ber) / max(1, n_coded)))
     return pre_ber <= p_hat + AGREE_SIGMAS * sd + AGREE_SLACK
+
+
+def _ldpc_decode(code, bits: np.ndarray, offset: int, soft, clean: bool):
+    """(offset, info bits, converged rate, pre-FEC BER) of an LDPC hit, or
+    None when a noisy one does not decode.  A clean hit decodes as before.
+    A noisy one first settles its alignment by decoding the neighbours
+    (settle_offset), then must converge on LDPC_MIN_CONVERGED of the first
+    LDPC_TRIAL_BLOCKS codewords before the rest is decoded.  The pre-FEC
+    BER is the fraction of received bits the decode changed (for a
+    converged codeword exactly its re-encode distance)."""
+    if not clean:
+        offset = settle_offset(code, bits, offset, soft)
+    first = LDPC_MAX_BLOCKS if clean else LDPC_TRIAL_BLOCKS
+    parts = [code.decode_blocks(bits, offset, first, soft)]
+    trial = parts[0][2]
+    if not clean and not (len(trial) and trial.mean() >= LDPC_MIN_CONVERGED):
+        return None
+    if len(trial) == first < LDPC_MAX_BLOCKS:
+        parts.append(code.decode_blocks(bits, offset + first * code.n,
+                                        LDPC_MAX_BLOCKS - first, soft))
+    blocks, words, ok = (np.concatenate(x) for x in zip(*parts))
+    if not len(ok):
+        return offset, np.zeros(0, dtype=np.uint8), 0.0, None
+    return (offset, words[:, code.info_columns()].reshape(-1), float(ok.mean()),
+            float((words[:, code.transmitted] != blocks).mean()))
 
 
 def identify_outer(inner: FECHypothesis, config) -> FECHypothesis:
