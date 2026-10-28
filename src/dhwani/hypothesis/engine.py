@@ -279,7 +279,8 @@ def bitlayer_search(streams: list, config, fec_config, framing_config,
                 dbits, max_L=config.rank_scan_max_L,
                 sig_thr=config.deficiency_significance,
                 rows_factor=config.rank_scan_rows_factor,
-                max_bits=config.rank_scan_max_bits)
+                max_bits=config.rank_scan_max_bits, llrs=dsoft,
+                fec_config=fec_config)
             # frame-repetition structure can masquerade as an interleaver
             # period, so the plain (no-interleaver) branch is always tried
             # and the CRC/frame evidence decides between them

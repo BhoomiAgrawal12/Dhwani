@@ -105,7 +105,31 @@ and de-interleaving.
   interleaver (N_cbps 48/96/192/288) is tested the same way, also when the
   rank scan is flat (a short capture hides a 192-bit period). No inverse
   helps: `pseudo_random` with its period; other permutations are not
-  searched.
+  searched. First, and on a flat profile too (0.5% BER erases the period,
+  RS never shows one), the Pattern Scan (`pattern_scan.py`) looks for the
+  code through the interleaver: rate-1/2 registry checks dilated by
+  D = 1..72 (a block's rows keep a check's taps R apart), the column count
+  and block start from the dilated check folded by R x C against its
+  validity template, the period's geometries and the 802.11 modes screened
+  at every offset, and an RS prefix-XOR pass over every offset of common
+  block sizes (row-aligned bytes). It reports a geometry only with its
+  code: an Early Verdict "code" on the de-interleaved stream (from where
+  the code starts to hold) with every check of the code under one
+  substream-inversion pattern, 7 spreads above the scan's other
+  dilations, windows and checks, no tap pairing at a lag where the stream
+  repeats itself, the check silent at its other phase (a check that holds
+  at both is a recurrence of the data: PRBS or scrambled idle decimated by
+  D), no code half as strong on the raw stream (a geometry that is the
+  identity there, such as convolutional B=2 M=1, is no interleaver), and
+  `identify_convolutional` / `identify_rs` agreeing (the decode re-encoding
+  at the BER the checks read). Its work is capped by counts, not time.
+  Limits: only rate-1/2 unpunctured codes are reported (rate 1/3 and
+  punctured codes veto a claim but have no decoder to confirm them); the
+  scan reads hard parities, LLRs only the confirmation (K=7 under 8x16 up
+  to ~6% BER at 64k bits); RS only under block geometries with whole bytes
+  per row (cols a multiple of 8, GF(2^8)), squares and 2:1 rectangles up
+  to 32 x 32 or the period's factor pairs, up to ~5e-4 BER; LDPC under an
+  interleaver is not searched.
 - **FEC** (`fec/`): the Code Registry (`registry.py`) compiles every
   library code at import into its lightest dual-code checks (exact, from
   the null space of a window's generator matrix) or its RS roots; the

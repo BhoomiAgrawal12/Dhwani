@@ -12,6 +12,10 @@ Method (after Sicot & Houcke 2009):
    detected, permutation not recovered - reported honestly).  Each hypothesis is scored by how much *fine-grained*
    structure its de-interleaver reveals: after the correct inverse, code
    structure reappears at small L (the "second, deeper dip").
+Before step 4, and on a flat profile too, the Pattern Scan (pattern_scan.py)
+looks for a registry code through the interleaver; a geometry it confirms
+together with its code is returned at once, otherwise the steps above run
+as they always did.
 """
 from __future__ import annotations
 
@@ -23,6 +27,7 @@ from ..gf2.rank import (expected_random_deficiency, gf2_rank_bits,
 from .interleavers import (IEEE80211_MODES, block_deinterleave,
                            conv_deinterleave, helical_deinterleave,
                            ieee80211_permutation, pn_deinterleave)
+from .pattern_scan import pattern_scan
 
 
 def _structure_score(bits: np.ndarray, L_max: int, sig_thr: float) -> tuple:
@@ -112,14 +117,25 @@ def _published_permutations(bits, sig_thr, base_sig) -> list:
     return hyps
 
 
+def _scanned(found: list, profile_dict: dict) -> list:
+    """Pattern Scan hits, the rank profile on the winner, 'none' fallback."""
+    found[0].rank_profile = profile_dict
+    return found + [InterleaverHypothesis(kind="none", score=0.1,
+                                          parameters={"reason": "fallback"})]
+
+
 def identify_interleaver(bits: np.ndarray, max_L: int = 512,
                          sig_thr: float = 3.0, rows_factor: int = 2,
                          max_bits: int = 200000,
-                         progress=None) -> list:
+                         progress=None, llrs: np.ndarray = None,
+                         fec_config=None) -> list:
     """Returns ranked list of InterleaverHypothesis (best first).
 
     Always includes an explicit 'none' hypothesis so downstream stages can
-    proceed with the raw stream when no interleaving is detected.
+    proceed with the raw stream when no interleaving is detected.  `llrs`
+    (aligned with `bits`, > 0 => bit 0) feed the Pattern Scan's code probes;
+    `fec_config` (FECConfig, its defaults when None) gives it the RS
+    candidates and the convolutional search settings.
     """
     bits = np.asarray(bits, dtype=np.uint8)
     prof = rank_profile(bits, 2, max_L, rows_factor=rows_factor,
@@ -131,6 +147,10 @@ def identify_interleaver(bits: np.ndarray, max_L: int = 512,
     signif_L = L[sig > sig_thr]
 
     if signif_L.size == 0:
+        # the period is gone (a few 0.1% of BER, or RS): look for the code
+        found = pattern_scan(bits, llrs=llrs, fec_config=fec_config)
+        if found:
+            return _scanned(found, profile_dict)
         # a short capture can hide a permutation period from the rank scan
         # (192 bits needs ~80k bits); the published ones are cheap to test
         pub = _published_permutations(bits, sig_thr,
@@ -160,9 +180,6 @@ def identify_interleaver(bits: np.ndarray, max_L: int = 512,
                         "linearly coded but not interleaved",
                         "code_period_hint": P})]
 
-    hyps = []
-    base_sig = _fine_structure_sig(bits[:20000])
-
     # Candidate periods: repetitive payload data can carve spurious weak
     # dips below the true interleaver period, so try the strongest dips
     # first rather than trusting the smallest significant L alone.
@@ -172,6 +189,13 @@ def identify_interleaver(bits: np.ndarray, max_L: int = 512,
     for v in by_strength[:3] + [P]:
         if v > 8 and v not in cand_Ps:
             cand_Ps.append(v)
+
+    found = pattern_scan(bits, llrs=llrs, periods=cand_Ps, fec_config=fec_config)
+    if found:
+        return _scanned(found, profile_dict)
+
+    hyps = []
+    base_sig = _fine_structure_sig(bits[:20000])
 
     for Pc in cand_Ps:
         # --- block hypotheses (with block-phase alignment sweep) ----------
