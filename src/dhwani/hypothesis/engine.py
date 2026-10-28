@@ -259,9 +259,15 @@ def bitlayer_search(streams: list, config, fec_config, framing_config,
                     "sig": float(wr["repeats"])})
 
         bm = detect_additive_scrambler(bits)
+        # S6 LLRs ride along with the bits: a descrambler flips the sign
+        # wherever it flips a bit, an interleaver inverse moves both alike
+        soft = stream.llrs if (stream.llrs is not None and
+                               len(stream.llrs) == len(bits)) else None
 
         for opt in descr_options[:2]:
             dbits = opt["bits"]
+            dsoft = None if soft is None else \
+                np.where(dbits != bits, -soft, soft)
             h = AnalysisHypothesis(stage="bitlayer", assumptions={
                 "ambiguity": stream.hypothesis,
                 "descrambler": opt["name"],
@@ -273,7 +279,8 @@ def bitlayer_search(streams: list, config, fec_config, framing_config,
                 dbits, max_L=config.rank_scan_max_L,
                 sig_thr=config.deficiency_significance,
                 rows_factor=config.rank_scan_rows_factor,
-                max_bits=config.rank_scan_max_bits)
+                max_bits=config.rank_scan_max_bits, llrs=dsoft,
+                fec_config=fec_config)
             # frame-repetition structure can masquerade as an interleaver
             # period, so the plain (no-interleaver) branch is always tried
             # and the CRC/frame evidence decides between them
@@ -283,15 +290,16 @@ def bitlayer_search(streams: list, config, fec_config, framing_config,
                                                    parameters={"reason": "always-tried baseline"}))
             for il in tried:
                 de = _deinterleave_with(dbits, il)
+                de_soft = None if dsoft is None else _deinterleave_with(dsoft, il)
                 # RS syndromes are not invariant under the constellation
                 # ambiguity transforms (non-binary code), so RS is only
                 # worth trying on plain (non-differential) streams
                 try_rs = not stream.hypothesis.get("differential", False)
                 key = (hashlib.sha1(np.ascontiguousarray(de).tobytes())
-                       .hexdigest(), try_rs)
+                       .hexdigest(), try_rs, de_soft is not None)
                 if key not in fec_cache:
                     fec_cache[key] = identify_fec(de, fec_config,
-                                                  try_rs=try_rs)
+                                                  try_rs=try_rs, llrs=de_soft)
                 fec_hyps = fec_cache[key]
                 fec = fec_hyps[0]
                 decoded = fec.decoded_bits if (fec.decoded_bits is not None and

@@ -1,18 +1,18 @@
 {
   "provenance": {
-    "generated_utc": "2026-10-17T21:50:55Z",
+    "generated_utc": "2026-10-28T19:07:38Z",
     "command": "validate_offair.py --manifest results/offair/manifest.json --out-dir results/offair",
-    "git_commit": "fbc71fc",
+    "git_commit": "0757a4b",
     "git_dirty": false,
-    "cpu": "x86_64",
-    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
-    "python": "3.12.3",
-    "numpy": "2.5.3",
+    "cpu": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "python": "3.12.8",
+    "numpy": "2.5.4",
     "scipy": "1.18.1",
     "data": "off-air (licensed recordings, see cases)"
   },
   "settings": {
-    "manifest": "results/offair/manifest.json",
+    "manifest": "results\\offair\\manifest.json",
     "cvnet": false
   },
   "summary": {
@@ -44,7 +44,7 @@
   "cases": [
     {
       "file": "results/offair/recordings/entrysat.wav",
-      "license": "The Unlicense, Daniel Est\u00e9vez",
+      "license": "The Unlicense, Daniel Est\u00c3\u00a9vez",
       "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/entrysat.wav",
       "expected": {
         "sample_rate_hz": 48000,
@@ -76,14 +76,20 @@
         "crc": true
       },
       "all_correct": true,
+      "signal_quality": {
+        "evm_percent": 12.5,
+        "snr_db_evm": 18.1,
+        "demodulation_status": "GOOD",
+        "modulation_demodulated": "BPSK"
+      },
       "warnings": [
         "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4"
       ],
-      "elapsed_s": 4.7
+      "elapsed_s": 2.5
     },
     {
       "file": "results/offair/recordings/astrobio_telemetry.iq",
-      "license": "CC-BY-4.0, Daniel Est\u00e9vez",
+      "license": "CC-BY-4.0, Daniel Est\u00c3\u00a9vez",
       "source": "https://zenodo.org/records/6907821/files/ASTROBIO_2022-07-24T19_25_49.sigmf-data",
       "expected": {
         "signal": false
@@ -102,15 +108,21 @@
         "signal": true
       },
       "all_correct": true,
+      "signal_quality": {
+        "evm_percent": null,
+        "snr_db_evm": null,
+        "demodulation_status": null,
+        "modulation_demodulated": null
+      },
       "warnings": [
         "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
         "no signals detected above the CFAR threshold; analysis stopped at S2"
       ],
-      "elapsed_s": 0.9
+      "elapsed_s": 0.8
     },
     {
       "file": "results/offair/recordings/lilacsat1.wav",
-      "license": "The Unlicense, Daniel Est\u00e9vez",
+      "license": "The Unlicense, Daniel Est\u00c3\u00a9vez",
       "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/lilacsat1.wav; decoded by gr-satellites test.sh as 'LilacSat-1'; parameters from python/satyaml/LilacSat-1.yml (9k6 BPSK downlink)",
       "expected": {
         "sample_rate_hz": 48000,
@@ -136,16 +148,22 @@
         "symbol_rate_hz": true
       },
       "all_correct": true,
+      "signal_quality": {
+        "evm_percent": 48.8,
+        "snr_db_evm": 6.2,
+        "demodulation_status": "FAILED",
+        "modulation_demodulated": "BPSK"
+      },
       "warnings": [
         "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4",
         "EVM 48.8% is too poor to slice BPSK reliably: bit stream withheld from the bit layer",
         "S6 quality gate: demodulation FAILED (EVM 48.8%, locks T=True C=True); the bit layer is withheld rather than fed unreliable bits"
       ],
-      "elapsed_s": 9.1
+      "elapsed_s": 28.5
     },
     {
       "file": "results/offair/recordings/duchifat_3.wav",
-      "license": "The Unlicense, Daniel Est\u00e9vez",
+      "license": "The Unlicense, Daniel Est\u00c3\u00a9vez",
       "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/duchifat_3.wav; decoded by gr-satellites test.sh as 'DUCHIFAT-3'; parameters from python/satyaml/DUCHIFAT-3.yml (9k6 BPSK downlink)",
       "expected": {
         "sample_rate_hz": 48000,
@@ -177,15 +195,21 @@
         "crc": true
       },
       "all_correct": true,
+      "signal_quality": {
+        "evm_percent": 14.4,
+        "snr_db_evm": 16.8,
+        "demodulation_status": "GOOD",
+        "modulation_demodulated": "BPSK"
+      },
       "warnings": [
         "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4",
         "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)"
       ],
-      "elapsed_s": 0.8
+      "elapsed_s": 1.7
     },
     {
       "file": "results/offair/recordings/fmn1.wav",
-      "license": "The Unlicense, Daniel Est\u00e9vez",
+      "license": "The Unlicense, Daniel Est\u00c3\u00a9vez",
       "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/fmn1.wav; decoded by gr-satellites test.sh as 'FMN-1'; parameters from python/satyaml/FMN-1.yml (9k6 BPSK downlink)",
       "expected": {
         "sample_rate_hz": 48000,
@@ -217,15 +241,21 @@
         "crc": true
       },
       "all_correct": true,
+      "signal_quality": {
+        "evm_percent": 16.1,
+        "snr_db_evm": 15.9,
+        "demodulation_status": "GOOD",
+        "modulation_demodulated": "BPSK"
+      },
       "warnings": [
         "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4",
         "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)"
       ],
-      "elapsed_s": 1.3
+      "elapsed_s": 4.4
     },
     {
       "file": "results/offair/recordings/il01.wav",
-      "license": "The Unlicense, Daniel Est\u00e9vez",
+      "license": "The Unlicense, Daniel Est\u00c3\u00a9vez",
       "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/il01.wav; decoded by gr-satellites test.sh as 'IL01'; parameters from python/satyaml/IL01.yml (9k6 BPSK downlink)",
       "expected": {
         "sample_rate_hz": 48000,
@@ -257,14 +287,20 @@
         "crc": true
       },
       "all_correct": true,
+      "signal_quality": {
+        "evm_percent": 22.5,
+        "snr_db_evm": 13.0,
+        "demodulation_status": "GOOD",
+        "modulation_demodulated": "BPSK"
+      },
       "warnings": [
         "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4"
       ],
-      "elapsed_s": 2.3
+      "elapsed_s": 10.1
     },
     {
       "file": "results/offair/recordings/itasat1.wav",
-      "license": "The Unlicense, Daniel Est\u00e9vez",
+      "license": "The Unlicense, Daniel Est\u00c3\u00a9vez",
       "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/itasat1.wav; decoded by gr-satellites test.sh as 'ITASAT 1'; parameters from python/satyaml/ITASAT_1.yml (1k2 BPSK downlink)",
       "expected": {
         "sample_rate_hz": 48000,
@@ -290,17 +326,24 @@
         "symbol_rate_hz": true
       },
       "all_correct": true,
+      "signal_quality": {
+        "evm_percent": 26.6,
+        "snr_db_evm": 11.5,
+        "demodulation_status": "DEGRADED",
+        "modulation_demodulated": "BPSK"
+      },
       "warnings": [
         "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4",
         "EVM 26.6% is marginal for BPSK: downstream results are speculative",
         "no scrambler found, but DVB was only phase-searched over its first 512 phases; a stream scrambled at another phase would look unscrambled",
-        "frame structure candidate rejected: insufficient evidence (crc_pass=False, sync_found=False, sync_bits=0, column_stability=0.483, n_frames=93); periodicity alone does not make a frame"
+        "frame structure candidate rejected: insufficient evidence (crc_pass=False, sync_found=False, sync_bits=0, column_stability=0.482, n_frames=93); periodicity alone does not make a frame",
+        "Cross-check Gate: the convolutional code reads a channel BER of 0.0233, but the BPSK EVM of 26.6% implies 8.52e-05 (inconsistent above 4x that + 0.01): a likely false detection, or errors the Gaussian EVM model does not see (an uncoded stretch, bursts, phase noise, cycle slips); FEC verdict downgraded (score x0.5)"
       ],
-      "elapsed_s": 6.3
+      "elapsed_s": 34.8
     },
     {
       "file": "results/offair/recordings/shaonian_xing.wav",
-      "license": "The Unlicense, Daniel Est\u00e9vez",
+      "license": "The Unlicense, Daniel Est\u00c3\u00a9vez",
       "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/shaonian_xing.wav; decoded by gr-satellites test.sh as 'Shaonian Xing'; parameters from python/satyaml/Shaonian_Xing.yml (9k6 BPSK downlink)",
       "expected": {
         "sample_rate_hz": 48000,
@@ -332,14 +375,20 @@
         "crc": true
       },
       "all_correct": true,
+      "signal_quality": {
+        "evm_percent": 15.7,
+        "snr_db_evm": 16.1,
+        "demodulation_status": "GOOD",
+        "modulation_demodulated": "BPSK"
+      },
       "warnings": [
         "single-channel WAV: real signal converted to complex baseband (mixed by -fs/4, half-band filtered, decimated by 2); sample rate is fs/2 and the centre frequency is shifted by fs/4"
       ],
-      "elapsed_s": 2.7
+      "elapsed_s": 15.9
     },
     {
       "file": "results/offair/recordings/ty_2.wav",
-      "license": "The Unlicense, Daniel Est\u00e9vez",
+      "license": "The Unlicense, Daniel Est\u00c3\u00a9vez",
       "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/ty_2.wav; decoded by gr-satellites test.sh as 'TY-2'; parameters from python/satyaml/TY-2.yml (9k6 FSK downlink)",
       "expected": {
         "sample_rate_hz": 48000,
@@ -365,6 +414,12 @@
         "symbol_rate_hz": true
       },
       "all_correct": true,
+      "signal_quality": {
+        "evm_percent": 44.8,
+        "snr_db_evm": 7.0,
+        "demodulation_status": "DEGRADED",
+        "modulation_demodulated": "BPSK"
+      },
       "warnings": [
         "single-channel WAV holds baseband audio (its band starts at DC, e.g. an FM receiver's output): analysed as a real signal at the file rate; FSK, GFSK and GMSK look alike as audio",
         "no signal-free stretch to estimate the DC offset from: the whole-recording mean was removed, which also removes any mean the signal itself has (a zero-CFO burst with constant fields can be distorted)",
@@ -372,11 +427,11 @@
         "no scrambler found, but DVB was only phase-searched over its first 512 phases; a stream scrambled at another phase would look unscrambled",
         "frame structure candidate rejected: insufficient evidence (crc_pass=False, sync_found=False, sync_bits=0, column_stability=0.023, n_frames=202); periodicity alone does not make a frame"
       ],
-      "elapsed_s": 13.4
+      "elapsed_s": 62.3
     },
     {
       "file": "results/offair/recordings/trisat.wav",
-      "license": "The Unlicense, Daniel Est\u00e9vez",
+      "license": "The Unlicense, Daniel Est\u00c3\u00a9vez",
       "source": "https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/trisat.wav; decoded by gr-satellites test.sh as 'TRISAT'; parameters from python/satyaml/TRISAT.yml (9766 baud FSK downlink)",
       "expected": {
         "sample_rate_hz": 48000,
@@ -402,14 +457,21 @@
         "symbol_rate_hz": true
       },
       "all_correct": true,
+      "signal_quality": {
+        "evm_percent": 36.5,
+        "snr_db_evm": 8.8,
+        "demodulation_status": "DEGRADED",
+        "modulation_demodulated": "BPSK"
+      },
       "warnings": [
         "single-channel WAV holds baseband audio (its band starts at DC, e.g. an FM receiver's output): analysed as a real signal at the file rate; FSK, GFSK and GMSK look alike as audio",
         "8.93% of samples at full scale: recording appears clipped; spurious harmonics likely",
         "EVM 36.5% is marginal for BPSK: downstream results are speculative",
+        "bit-layer search stopped at its 90 s budget before every candidate stream was examined; the verdicts below come from the streams explored",
         "no scrambler found, but DVB was only phase-searched over its first 512 phases; a stream scrambled at another phase would look unscrambled",
-        "frame structure candidate rejected: insufficient evidence (crc_pass=False, sync_found=False, sync_bits=0, column_stability=0.239, n_frames=1039); periodicity alone does not make a frame"
+        "frame structure candidate rejected: insufficient evidence (crc_pass=False, sync_found=False, sync_bits=0, column_stability=0.231, n_frames=1039); periodicity alone does not make a frame"
       ],
-      "elapsed_s": 46.7
+      "elapsed_s": 129.9
     }
   ]
 }

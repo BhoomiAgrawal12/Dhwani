@@ -80,6 +80,7 @@ class FECConfig:
         {"n": 255, "k": 239, "prim": 0x11d, "fcr": 1, "generator": 2},
         {"n": 255, "k": 239, "prim": 0x11d, "fcr": 0, "generator": 2},
         {"n": 255, "k": 223, "prim": 0x11d, "fcr": 0, "generator": 2},
+        {"n": 204, "k": 188, "prim": 0x11d, "fcr": 0, "generator": 2},  # DVB
     ])
     ldpc_candidates: list = field(default_factory=lambda: [
         {"n": 128, "k": 64, "seed": 1},
@@ -88,6 +89,10 @@ class FECConfig:
     ])
     min_syndrome_zero_rate: float = 0.7
     max_test_bits: int = 100000
+    # the bundled LDPC matrices (802.11n, CCSDS AR4JA): None joins them to a
+    # non-empty ldpc_candidates (an empty list still turns LDPC off, as
+    # before); True scans them even with an empty list; False never
+    ldpc_bundled: Optional[bool] = None
 
 
 @dataclass

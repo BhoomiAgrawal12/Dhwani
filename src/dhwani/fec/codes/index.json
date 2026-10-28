@@ -1,0 +1,38 @@
+[
+ {
+  "name": "802.11n 648 r1/2",
+  "file": "wifi_648_r12.qc",
+  "standard": "IEEE 802.11n",
+  "n": 648,
+  "k": 324,
+  "punctured": 0,
+  "source": "https://mentor.ieee.org/802.11/dcn/05/11-05-1102-04-000n-joint-proposal-phy-specification.doc Table B.1(a)"
+ },
+ {
+  "name": "802.11n 648 r3/4",
+  "file": "wifi_648_r34.qc",
+  "standard": "IEEE 802.11n",
+  "n": 648,
+  "k": 486,
+  "punctured": 0,
+  "source": "https://mentor.ieee.org/802.11/dcn/05/11-05-1102-04-000n-joint-proposal-phy-specification.doc Table B.1(c)"
+ },
+ {
+  "name": "AR4JA k1024 r1/2",
+  "file": "ar4ja_k1024_r12.alist",
+  "standard": "CCSDS AR4JA",
+  "n": 2048,
+  "k": 1024,
+  "punctured": 512,
+  "source": "CCSDS 131.0-B-5 (Sep 2023) section 7.4, https://ccsds.org/Pubs/131x0b5.pdf (H 1536 x 2560, last M = 512 columns punctured)"
+ },
+ {
+  "name": "AR4JA k1024 r4/5",
+  "file": "ar4ja_k1024_r45.alist",
+  "standard": "CCSDS AR4JA",
+  "n": 1280,
+  "k": 1024,
+  "punctured": 128,
+  "source": "CCSDS 131.0-B-5 (Sep 2023) section 7.4, https://ccsds.org/Pubs/131x0b5.pdf (H 384 x 1408, last M = 128 columns punctured)"
+ }
+]

@@ -22,7 +22,8 @@ from .params import estimate_parameters
 from .params.estimators import sample_rate_candidates
 from .modulation import classify_modulation
 from .demod import demodulate
-from .bits.ambiguity import enumerate_ambiguities
+from .demod.cross_check import cross_check_gate
+from .bits.ambiguity import differential_decode, enumerate_ambiguities
 from .common.models import BitStream
 from .framing.frames import binary_autocorrelation, payload_stats
 from .hypothesis import bitlayer_search
@@ -389,11 +390,15 @@ class Analyzer:
                     "every candidate stream was examined; the verdicts below "
                     "come from the streams explored")
             best = search["best"]
+            gate = None
             if best:
                 _fill_result_from_best(result, best)
                 fr = best.get("frames")
                 if fr:
                     frames_matrix = fr["analysis"]["frames"]
+                # Cross-check Gate: the accepted code's BER against the one
+                # the EVM implies, before S11 reads the demodulation status
+                gate = cross_check_gate(result, demod, best["hypothesis"])
             il, fec, frh = result.interleaver, result.fec, result.frames
             scr = result.scrambler
             s7_extra = (f"; descrambler {scr.name or scr.kind}"
@@ -406,7 +411,11 @@ class Analyzer:
             trace.mark("S9", "executed",
                        (f"FEC: {fec.family}"
                         + (f", syndrome-zero rate {fec.syndrome_zero_rate}"
-                           if fec.syndrome_zero_rate is not None else ""))
+                           if fec.syndrome_zero_rate is not None else "")
+                        + (f"; downgraded by the Cross-check Gate (code BER "
+                           f"{gate['ber_code']:.3g}, the EVM implies "
+                           f"{gate['ber_evm']:.3g})"
+                           if gate and gate["consistent"] is False else ""))
                        if fec else "no FEC hypothesis")
             trace.mark("S10", "executed",
                        (f"frames {frh.frame_length_bits} bits, sync "
@@ -458,16 +467,22 @@ class Analyzer:
 
 # ----------------------------------------------------------------------
 def _fsk_streams(demod) -> list:
+    """Normal/inverted x plain/differential, each with the LLRs that belong
+    to its own bits (inverted: negated; differential: box-plus)."""
     bits = demod.hard_bits
+    llrs = demod.llrs if (demod.llrs is not None and
+                          len(demod.llrs) == len(bits)) else None
     inv = (1 - bits).astype(np.uint8)
-    def diff(b):
-        d = np.bitwise_xor(b[1:], b[:-1])
-        return np.concatenate([[b[0]], d]).astype(np.uint8)
+    inv_llrs = None if llrs is None else -llrs
+    d_bits, d_llrs = differential_decode(bits, llrs)
+    di_bits, di_llrs = differential_decode(inv, inv_llrs)
     return [
-        BitStream(bits=bits, llrs=demod.llrs, hypothesis={"mapping": "normal"}),
-        BitStream(bits=inv, hypothesis={"mapping": "inverted"}),
-        BitStream(bits=diff(bits), hypothesis={"mapping": "normal", "differential": True}),
-        BitStream(bits=diff(inv), hypothesis={"mapping": "inverted", "differential": True}),
+        BitStream(bits=bits, llrs=llrs, hypothesis={"mapping": "normal"}),
+        BitStream(bits=inv, llrs=inv_llrs, hypothesis={"mapping": "inverted"}),
+        BitStream(bits=d_bits, llrs=d_llrs,
+                  hypothesis={"mapping": "normal", "differential": True}),
+        BitStream(bits=di_bits, llrs=di_llrs,
+                  hypothesis={"mapping": "inverted", "differential": True}),
     ]
 
 

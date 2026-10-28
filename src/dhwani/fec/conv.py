@@ -89,11 +89,6 @@ def viterbi_decode(bits: np.ndarray, code: ConvCode, soft: np.ndarray = None) ->
         return np.zeros(0, dtype=np.uint8)
     table = _output_table(code)
 
-    # branch output bits per (state, input): (S, 2, n)
-    outbits = np.zeros((n_states, 2, n), dtype=np.int8)
-    for j in range(n):
-        outbits[:, :, j] = (table >> (n - 1 - j)) & 1
-
     # Predecessor structure: for next state ns, the input bit that led there
     # is ns >> (K-2); the two possible previous states are 2*(ns & mask) and
     # 2*(ns & mask) + 1.
@@ -108,23 +103,32 @@ def viterbi_decode(bits: np.ndarray, code: ConvCode, soft: np.ndarray = None) ->
     pm[0] = 0.0
     bp = np.zeros((n_steps, n_states), dtype=np.uint8)  # 0 -> prev0, 1 -> prev1
 
-    rx = np.asarray(bits[: n_steps * n], dtype=np.int8).reshape(n_steps, n)
-    soft_arr = None
-    if soft is not None:
-        soft_arr = np.asarray(soft[: n_steps * n], dtype=np.float64).reshape(n_steps, n)
-
-    out0 = outbits[prev0, in_bit]     # (S, n) output bits along branch prev0->ns
-    out1 = outbits[prev1, in_bit]
+    # Branch metric of every output pattern (2^n of them) at every step,
+    # computed once outside the trellis loop, which then only gathers:
+    # Hamming distance for hard input, sum (2*out - 1)*llr for soft input
+    # (the per-branch metrics this loop used to recompute every step).
+    pats = (np.arange(1 << n)[:, None] >> (n - 1 - np.arange(n))) & 1   # (P, n)
+    if soft is None:
+        rx = np.asarray(bits[: n_steps * n], dtype=np.int8).reshape(n_steps, n)
+        bm = (rx[:, None, :] != pats[None, :, :]).sum(axis=2)
+    else:
+        llr = np.asarray(soft[: n_steps * n], dtype=np.float64).reshape(n_steps, n)
+        # two running sums, not llr @ (2*pats - 1).T: they add in the old
+        # per-branch order, so metric ties break exactly as before
+        pos = np.zeros((n_steps, len(pats)))
+        neg = np.zeros((n_steps, len(pats)))
+        for j in range(n):
+            pos = pos + np.where(pats[None, :, j] == 1, llr[:, j:j + 1], 0.0)
+            neg = neg + np.where(pats[None, :, j] == 0, llr[:, j:j + 1], 0.0)
+        bm = pos - neg
+    # packed output pattern on the branches prev0->ns and prev1->ns
+    # (output 0 = MSB, as in the table)
+    pat0 = table[prev0, in_bit].astype(np.intp)
+    pat1 = table[prev1, in_bit].astype(np.intp)
     for t in range(n_steps):
-        if soft_arr is None:
-            bm0 = (out0 != rx[t]).sum(axis=1)
-            bm1 = (out1 != rx[t]).sum(axis=1)
-        else:
-            llr = soft_arr[t]
-            bm0 = np.where(out0 == 1, llr, 0.0).sum(axis=1) - np.where(out0 == 0, llr, 0.0).sum(axis=1)
-            bm1 = np.where(out1 == 1, llr, 0.0).sum(axis=1) - np.where(out1 == 0, llr, 0.0).sum(axis=1)
-        c0 = pm[prev0] + bm0
-        c1 = pm[prev1] + bm1
+        row = bm[t]
+        c0 = pm[prev0] + row[pat0]
+        c1 = pm[prev1] + row[pat1]
         choose1 = c1 < c0
         pm = np.where(choose1, c1, c0)
         bp[t] = choose1

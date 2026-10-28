@@ -81,7 +81,10 @@ m >= 8 a symbol-domain carrier estimate in the outer quarter of
 
 A blind loop locks to *a* constellation orientation, so every rotation,
 I/Q swap and differential interpretation becomes a candidate bit stream
-(FSK: normal/inverted x plain/differential).
+(FSK: normal/inverted x plain/differential). Each carries the S6 LLRs of
+its own bits (inverted: negated; differential: box-plus of the pair it
+XORs), and the bit layer moves them with the bits through descrambling
+and de-interleaving.
 
 ## S8-S10 bit layer (`hypothesis/engine.py`)
 
@@ -102,19 +105,102 @@ I/Q swap and differential interpretation becomes a candidate bit stream
   interleaver (N_cbps 48/96/192/288) is tested the same way, also when the
   rank scan is flat (a short capture hides a 192-bit period). No inverse
   helps: `pseudo_random` with its period; other permutations are not
-  searched.
-- **FEC** (`fec/`): convolutional codes by dual-code syndrome rate over
-  K and generator sweeps, then Viterbi with substream-inversion
-  resolution; Reed-Solomon by syndrome sweep over bit and symbol
-  alignment, decode via reedsolo; LDPC by candidate-set matching and
-  bit-flipping decode; RS outer code in the Viterbi output
-  (`identify_outer`) for concatenated codes.
+  searched. First, and on a flat profile too (0.5% BER erases the period,
+  RS never shows one), the Pattern Scan (`pattern_scan.py`) looks for the
+  code through the interleaver: rate-1/2 registry checks dilated by
+  D = 1..72 (a block's rows keep a check's taps R apart), the column count
+  and block start from the dilated check folded by R x C against its
+  validity template, the period's geometries and the 802.11 modes screened
+  at every offset, and an RS prefix-XOR pass over every offset of common
+  block sizes (row-aligned bytes). It reports a geometry only with its
+  code: an Early Verdict "code" on the de-interleaved stream (from where
+  the code starts to hold) with every check of the code under one
+  substream-inversion pattern, 7 spreads above the scan's other
+  dilations, windows and checks, no tap pairing at a lag where the stream
+  repeats itself, the check silent at its other phase (a check that holds
+  at both is a recurrence of the data: PRBS or scrambled idle decimated by
+  D), no code half as strong on the raw stream (a geometry that is the
+  identity there, such as convolutional B=2 M=1, is no interleaver), and
+  `identify_convolutional` / `identify_rs` agreeing (the decode re-encoding
+  at the BER the checks read). Its work is capped by counts, not time.
+  Limits: only rate-1/2 unpunctured codes are reported (rate 1/3 and
+  punctured codes veto a claim but have no decoder to confirm them); the
+  scan reads hard parities, LLRs only the confirmation (K=7 under 8x16 up
+  to ~6% BER at 64k bits); RS only under block geometries with whole bytes
+  per row (cols a multiple of 8, GF(2^8)), squares and 2:1 rectangles up
+  to 32 x 32 or the period's factor pairs, up to ~5e-4 BER; LDPC under an
+  interleaver is not searched.
+- **FEC** (`fec/`): the Code Registry (`registry.py`) compiles every
+  library code at import into its lightest dual-code checks (exact, from
+  the null space of a window's generator matrix) or its RS roots; the
+  Code Probe (`probe.py`) scores a check by the mean of prod tanh(L/2)
+  over its taps at every alignment and sign (idle runs skipped, many
+  checks per matrix product), and the Early Verdict, an SPRT (alpha
+  1e-6, beta 1e-3) checked against the whole stream's z, calls it code,
+  no code or undecided, with a BER read from the hard parities.
+  Convolutional codes: registry, standard and exhaustive K <= 7
+  candidates, "no code" dropped before a soft Viterbi decode with
+  substream-inversion resolution. A syndrome-zero rate >= 0.7 admits a
+  code as before; below it a "code" must stand 7 spreads above the
+  sweep's own wrong hypotheses of its check weight (text, repeated frames
+  and headers bias wrong checks of uncoded data) and its decode must
+  re-encode within sampling error of the BER its checks read; Reed-Solomon
+  (DVB RS(204,188) included): every bit offset and codeword alignment
+  from one prefix-XOR pass per root, decode via reedsolo; LDPC
+  (`ldpc.py`) from a set of known matrices read from `.qc` / `.alist`
+  files: bundled 802.11n n = 648 (rate 1/2 and 3/4) and CCSDS AR4JA
+  k = 1024 at rate 1/2 (2048 of 2560 bits sent) and rate 4/5 (the
+  "n = 1280" AR4JA code: 1280 of 1408 sent), plus the configured seeded
+  candidates and any matrix file given by path (`{"path": ...}`). An
+  empty `ldpc_candidates` still turns LDPC off; `fec.ldpc_bundled`
+  (default `null`: the bundled codes join a non-empty list) set to `true`
+  scans the bundled codes even then, `false` never (the listed
+  candidates only, as before). The Pre-screen scores every code at every codeword
+  alignment and both polarities with its lightest checks (for AR4JA, row
+  sums that cancel the punctured bits) over at least 8 codewords, about
+  2048 check values per alignment (AR4JA r1/2 reads its 512 lightest
+  checks whole, AR4JA r4/5 16 codewords); the Early Verdict may start at
+  any of the first four codewords (a preamble before the first whole
+  codeword). Only the best "code" that stands 7 spreads above the scan's
+  other hypotheses goes on; its alignment is then settled among its
+  neighbours, because a window a bit off a quasi-cyclic codeword is the
+  codeword with every circulant rotated except at the circulant
+  boundaries (one bit off, 97% of AR4JA r1/2's checks still hold and the
+  decoder converges onto the rotated codewords): the confirmation over 64
+  codewords and every probe check picks the alignment, and for a noisy
+  stream the neighbours' decodes do (the rotated codewords also flip
+  half of the boundary bits). The decoder is layered offset min-sum
+  (offset 0.15, then scale 0.8, at most 30 iterations, punctured bits at
+  LLR 0, soft when LLRs are aligned); below the old clean-codeword gate
+  it must converge on half of the first 64 codewords. An inverted hit
+  (the complement satisfies the code) is left to the bit layer's
+  polarity fan-out. Measured through `identify_fec` at an unknown offset
+  over 40 kbit (BPSK, 40 seeds; the rest are missed, none reported at a
+  wrong alignment): with soft LLRs AR4JA r1/2 37/40 at Eb/N0 2.0 dB,
+  AR4JA r4/5 39/40 at 3.5 dB, 802.11n r1/2 40/40 at 2.0 dB; with hard
+  bits AR4JA r1/2 39/40 at 3.0 dB; with QPSK S6 LLRs AR4JA r1/2 36/40 at
+  2.5 dB and r4/5 40/40 at 4.0 dB. Detection therefore lags the decoder
+  by about 0.5 dB on AR4JA (its checks are heavy: weight 11 at rate 1/2,
+  33 at 4/5). RS outer code in the Viterbi output (`identify_outer`) for
+  concatenated codes.
 - **Framing** (`framing/`): binary autocorrelation and column stability
   give the frame length; the longest low-entropy column run is the sync;
   a bounded CRC hunt over the configured catalogue and positions; byte
   and sync-anchored rotations when the first anchor misses. A frame is
   accepted only on a CRC pass or sync + column stability + enough
   frames.
+- **Cross-check Gate** (`demod/cross_check.py`): the accepted code's
+  Early Verdict BER may not exceed 4x the BER the S6 EVM implies plus
+  0.01, else the claim is a likely false detection (or carries errors the
+  Gaussian model does not see, such as bursts, slips or an uncoded
+  stretch): its FEC score is halved, the demodulation status S11 reads is
+  capped at DEGRADED and a warning names both numbers. The EVM model is
+  per-point nearest neighbours weighted by the label bits they flip, the
+  noise split over two axes for a complex table and all on the decision
+  axis for a real one (BPSK, OOK, ASK: exact for FM-receiver audio); both
+  give Q(1/EVM) for BPSK and QPSK. Without an EVM (the FSK and GMSK
+  receivers) or a code estimate no verdict is drawn:
+  `fec.cross_check.consistent` is null.
 
 ## S11 payload intelligence (`payload/`)
 

@@ -109,6 +109,15 @@ class WaveformFactory:
                 "K": code.K, "rate": "1/2",
                 "generators_octal": [oct(g) for g in code.generators]}
         if family == "ldpc":
+            # a bundled code of the registry by name (802.11n, AR4JA);
+            # otherwise the seeded construction (any other name is a label)
+            if isinstance(fec.get("name"), str):
+                from ..fec.registry import LDPC_REGISTRY
+                if fec["name"] in LDPC_REGISTRY:
+                    code = LDPC_REGISTRY[fec["name"]]["code"]
+                    return code.encode(bits), {"n": code.n, "k": code.k,
+                                               "seed": code.seed, "name": code.name,
+                                               "rate": f"{code.k}/{code.n}"}
             from ..fec.ldpc import LDPCCode
             code = LDPCCode(fec.get("n", 256), fec.get("k", 128),
                             fec.get("seed", 1))

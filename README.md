@@ -160,6 +160,8 @@ python scripts/benchmark.py --big     # -> results/benchmark.json
 python scripts/validate_matrix.py     # -> results/validation_report.json
 python scripts/validate_bitlayer.py   # -> results/bitlayer_report.json
 python scripts/validate_offair.py     # -> results/offair_report.json
+python scripts/benchmark_ber.py       # -> results/ber_report.json
+python scripts/plots.py               # -> results/charts/*.svg
 python scripts/render_readme.py       # re-render the block below
 python web/make-test-fixtures.py && node web/test-node.js
 ```
@@ -269,6 +271,22 @@ _Source: `results/validation_report.json` (synthetic (dhwani.synth.WaveformFacto
 
 _Source: `results/bitlayer_report.json` (synthetic (dhwani.synth.WaveformFactory)), commit `b5c0379`, Apple M1 Pro, Python 3.14.8, 2026-10-08T02:02:23Z._
 
+### Decoding proof (synthetic BER + off-air)
+
+80 frames per chain and Eb/N0 point through Dhwani's own S1-S6 receiver; BER over the information bits of locked frames only (a frame S2 does not detect, S6 gates as FAILED or whose sync word is not found is a lock failure, not bit errors).
+
+![Bit error rate and probability of lock versus Eb/N0 per decoding chain, with off-air recordings at their EVM SNR](results/charts/proof.svg)
+
+Off-air markers: the recordings below at their EVM SNR; filled when fully correct, ringed when a CRC-valid frame was decoded.
+
+| chain | code rate | locks ≥ 90% from | BER ≤ 1e-3 from | BER at 10 dB |
+|---|---:|---:|---:|---:|
+| uncoded QPSK | 1 | 7 dB | 7 dB | 2.4e-06 |
+| conv K=7 (171,133), soft Viterbi | 1/2 | 10 dB | 10 dB | < 1.5e-05 (0 errors) |
+| LDPC 802.11n n=648 r1/2, layered | 1/2 | 10 dB | 10 dB | < 1.5e-05 (0 errors) |
+
+_Source: `results/ber_report.json` (synthetic (QPSK frames through Dhwani's S1-S6 receiver, scripts/benchmark_ber.py)), commit `0757a4b`, Intel64 Family 6 Model 170 Stepping 4, GenuineIntel, Python 3.12.8, 2026-10-28T19:15:58Z._
+
 ### Headerless sample-rate candidates (synthetic)
 
 True sample rate among the PROBABLE candidates (with a correct symbol rate) in 10 of 10 headerless files; symbol rate right in 10; 4.1 candidates on average; sample rate applied: never.
@@ -300,7 +318,7 @@ _Source: `results/samplerate_report.json` (synthetic (dhwani.synth.WaveformFacto
 | [ty_2](https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/ty_2.wav) | 2FSK 9600 Bd | 2FSK 9599 Bd | - | ✓ | ✓ | ✓ |
 | [trisat](https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/trisat.wav) | 2FSK 9766 Bd | 2FSK 9766 Bd | - | ✓ | ✓ | ✓ |
 
-_Source: `results/offair_report.json` (off-air (licensed recordings, see cases)), commit `fbc71fc`, x86_64, Python 3.12.3, 2026-10-17T21:50:55Z._
+_Source: `results/offair_report.json` (off-air (licensed recordings, see cases)), commit `0757a4b`, Intel64 Family 6 Model 170 Stepping 4, GenuineIntel, Python 3.12.8, 2026-10-28T19:07:38Z._
 <!-- results:end -->
 
 ## Supported modulations (S6 demodulation)

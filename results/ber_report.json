@@ -1,0 +1,861 @@
+{
+  "provenance": {
+    "generated_utc": "2026-10-28T19:15:58Z",
+    "command": "benchmark_ber.py",
+    "git_commit": "0757a4b",
+    "git_dirty": false,
+    "cpu": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "python": "3.12.8",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "data": "synthetic (QPSK frames through Dhwani's S1-S6 receiver, scripts/benchmark_ber.py)"
+  },
+  "settings": {
+    "ebn0_db": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "frames": 80,
+    "quick": false,
+    "seed": 2026,
+    "frame_seed": "numpy default_rng([seed, chain index, round(10 * Eb/N0) mod 2^32, frame])",
+    "modulation": "QPSK (pinned at S6)",
+    "samples_per_symbol": 8,
+    "rolloff": 0.35,
+    "cfo_norm": 0.004,
+    "carrier_phase": "uniform [0, 2 pi) per frame",
+    "timing_offset_samples": "uniform [0, 1) per frame",
+    "payload_symbols": 2592,
+    "preamble_symbols": 640,
+    "sync_word_hex": "034776c7272895b0",
+    "sync_max_errors": 16,
+    "tail_symbols": 64,
+    "noise_pad_samples": 4000,
+    "esn0": "Eb/N0 + 10 log10(2 R) from the burst's measured energy per symbol",
+    "receiver": "S1 condition, S2 detect_signals (segment 0), S3 channelize, S4 estimate_parameters, S6 demodulate (QPSK, S4 samples/symbol and carrier offset)",
+    "frame_sync": "known sync word over the 8 S7 streams (rotations x conjugation, no differential)",
+    "lock_failure": "S2 detected nothing, S6 FAILED, or no sync word with <= 16 of 64 bits wrong"
+  },
+  "chains": {
+    "uncoded": {
+      "label": "uncoded QPSK",
+      "code": null,
+      "decoder": "hard decisions",
+      "code_rate": 1.0,
+      "info_bits_per_frame": 5184,
+      "coded_bits_per_frame": 5184,
+      "seconds_per_frame": 0.327,
+      "points": [
+        {
+          "ebn0_db": 0,
+          "esn0_db": 3.01,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 1,
+            "demod_failed": 79,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 12.84
+        },
+        {
+          "ebn0_db": 1,
+          "esn0_db": 4.01,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 24.34
+        },
+        {
+          "ebn0_db": 2,
+          "esn0_db": 5.01,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 22.44
+        },
+        {
+          "ebn0_db": 3,
+          "esn0_db": 6.01,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 27.99
+        },
+        {
+          "ebn0_db": 4,
+          "esn0_db": 7.01,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 27.98
+        },
+        {
+          "ebn0_db": 5,
+          "esn0_db": 8.01,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 27.37
+        },
+        {
+          "ebn0_db": 6,
+          "esn0_db": 9.01,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 27.12
+        },
+        {
+          "ebn0_db": 7,
+          "esn0_db": 10.01,
+          "frames": 80,
+          "locked": 72,
+          "lock_failures": 8,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 8,
+            "no_sync": 0
+          },
+          "p_lock": 0.9,
+          "p_lock_ci95": [
+            0.815,
+            0.948
+          ],
+          "bits": 373248,
+          "bit_errors": 329,
+          "ber": 0.000881451,
+          "ber_upper_95": null,
+          "elapsed_s": 29.13
+        },
+        {
+          "ebn0_db": 8,
+          "esn0_db": 11.01,
+          "frames": 80,
+          "locked": 80,
+          "lock_failures": 0,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 0,
+            "no_sync": 0
+          },
+          "p_lock": 1.0,
+          "p_lock_ci95": [
+            0.954,
+            1.0
+          ],
+          "bits": 414720,
+          "bit_errors": 110,
+          "ber": 0.000265239,
+          "ber_upper_95": null,
+          "elapsed_s": 28.39
+        },
+        {
+          "ebn0_db": 9,
+          "esn0_db": 12.01,
+          "frames": 80,
+          "locked": 80,
+          "lock_failures": 0,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 0,
+            "no_sync": 0
+          },
+          "p_lock": 1.0,
+          "p_lock_ci95": [
+            0.954,
+            1.0
+          ],
+          "bits": 414720,
+          "bit_errors": 25,
+          "ber": 6.02816e-05,
+          "ber_upper_95": null,
+          "elapsed_s": 29.56
+        },
+        {
+          "ebn0_db": 10,
+          "esn0_db": 13.01,
+          "frames": 80,
+          "locked": 80,
+          "lock_failures": 0,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 0,
+            "no_sync": 0
+          },
+          "p_lock": 1.0,
+          "p_lock_ci95": [
+            0.954,
+            1.0
+          ],
+          "bits": 414720,
+          "bit_errors": 1,
+          "ber": 2.41127e-06,
+          "ber_upper_95": null,
+          "elapsed_s": 30.78
+        }
+      ]
+    },
+    "conv_k7": {
+      "label": "conv K=7 (171,133), soft Viterbi",
+      "code": "conv K7 r1/2 (171,133), terminated",
+      "decoder": "soft-decision Viterbi on the S6 LLRs",
+      "code_rate": 0.498845,
+      "info_bits_per_frame": 2592,
+      "coded_bits_per_frame": 5196,
+      "seconds_per_frame": 0.295,
+      "points": [
+        {
+          "ebn0_db": 0,
+          "esn0_db": -0.01,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 80,
+            "demod_failed": 0,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 5.03
+        },
+        {
+          "ebn0_db": 1,
+          "esn0_db": 0.99,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 80,
+            "demod_failed": 0,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 4.99
+        },
+        {
+          "ebn0_db": 2,
+          "esn0_db": 1.99,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 66,
+            "demod_failed": 14,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 11.74
+        },
+        {
+          "ebn0_db": 3,
+          "esn0_db": 2.99,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 1,
+            "demod_failed": 79,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 35.53
+        },
+        {
+          "ebn0_db": 4,
+          "esn0_db": 3.99,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 28.79
+        },
+        {
+          "ebn0_db": 5,
+          "esn0_db": 4.99,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 24.92
+        },
+        {
+          "ebn0_db": 6,
+          "esn0_db": 5.99,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 31.0
+        },
+        {
+          "ebn0_db": 7,
+          "esn0_db": 6.99,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 28.87
+        },
+        {
+          "ebn0_db": 8,
+          "esn0_db": 7.99,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 28.62
+        },
+        {
+          "ebn0_db": 9,
+          "esn0_db": 8.99,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 27.83
+        },
+        {
+          "ebn0_db": 10,
+          "esn0_db": 9.99,
+          "frames": 80,
+          "locked": 77,
+          "lock_failures": 3,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 3,
+            "no_sync": 0
+          },
+          "p_lock": 0.9625,
+          "p_lock_ci95": [
+            0.895,
+            0.987
+          ],
+          "bits": 199584,
+          "bit_errors": 0,
+          "ber": 0.0,
+          "ber_upper_95": 1.50313e-05,
+          "elapsed_s": 32.27
+        }
+      ]
+    },
+    "ldpc_648": {
+      "label": "LDPC 802.11n n=648 r1/2, layered",
+      "code": "802.11n 648 r1/2",
+      "decoder": "Layered Decoder (offset min-sum) on the S6 LLRs",
+      "code_rate": 0.5,
+      "info_bits_per_frame": 2592,
+      "coded_bits_per_frame": 5184,
+      "seconds_per_frame": 0.277,
+      "points": [
+        {
+          "ebn0_db": 0,
+          "esn0_db": 0.0,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 80,
+            "demod_failed": 0,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 4.06
+        },
+        {
+          "ebn0_db": 1,
+          "esn0_db": 1.0,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 80,
+            "demod_failed": 0,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 4.22
+        },
+        {
+          "ebn0_db": 2,
+          "esn0_db": 2.0,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 68,
+            "demod_failed": 12,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 9.24
+        },
+        {
+          "ebn0_db": 3,
+          "esn0_db": 3.0,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 3,
+            "demod_failed": 77,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 35.14
+        },
+        {
+          "ebn0_db": 4,
+          "esn0_db": 4.0,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 28.06
+        },
+        {
+          "ebn0_db": 5,
+          "esn0_db": 5.0,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 24.43
+        },
+        {
+          "ebn0_db": 6,
+          "esn0_db": 6.0,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 29.25
+        },
+        {
+          "ebn0_db": 7,
+          "esn0_db": 7.0,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 27.22
+        },
+        {
+          "ebn0_db": 8,
+          "esn0_db": 8.0,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 27.04
+        },
+        {
+          "ebn0_db": 9,
+          "esn0_db": 9.0,
+          "frames": 80,
+          "locked": 0,
+          "lock_failures": 80,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 80,
+            "no_sync": 0
+          },
+          "p_lock": 0.0,
+          "p_lock_ci95": [
+            0.0,
+            0.046
+          ],
+          "bits": 0,
+          "bit_errors": 0,
+          "ber": null,
+          "ber_upper_95": null,
+          "elapsed_s": 26.74
+        },
+        {
+          "ebn0_db": 10,
+          "esn0_db": 10.0,
+          "frames": 80,
+          "locked": 76,
+          "lock_failures": 4,
+          "lock_failure_reasons": {
+            "no_detection": 0,
+            "demod_failed": 4,
+            "no_sync": 0
+          },
+          "p_lock": 0.95,
+          "p_lock_ci95": [
+            0.878,
+            0.98
+          ],
+          "bits": 196992,
+          "bit_errors": 0,
+          "ber": 0.0,
+          "ber_upper_95": 1.5229e-05,
+          "elapsed_s": 28.03
+        }
+      ]
+    }
+  },
+  "theory": {
+    "chain": "uncoded",
+    "formula": "0.5 erfc(sqrt(Eb/N0))",
+    "points": [
+      {
+        "ebn0_db": 0,
+        "ber": 0.0786496
+      },
+      {
+        "ebn0_db": 1,
+        "ber": 0.056282
+      },
+      {
+        "ebn0_db": 2,
+        "ber": 0.0375061
+      },
+      {
+        "ebn0_db": 3,
+        "ber": 0.0228784
+      },
+      {
+        "ebn0_db": 4,
+        "ber": 0.0125008
+      },
+      {
+        "ebn0_db": 5,
+        "ber": 0.00595387
+      },
+      {
+        "ebn0_db": 6,
+        "ber": 0.00238829
+      },
+      {
+        "ebn0_db": 7,
+        "ber": 0.000772675
+      },
+      {
+        "ebn0_db": 8,
+        "ber": 0.000190908
+      },
+      {
+        "ebn0_db": 9,
+        "ber": 3.36272e-05
+      },
+      {
+        "ebn0_db": 10,
+        "ber": 3.87211e-06
+      }
+    ]
+  },
+  "elapsed_s": 791.0
+}
