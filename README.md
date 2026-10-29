@@ -171,128 +171,6 @@ The numbers below are rendered from `results/*.json` by
 commit and command that produced it. Do not edit this block by hand.
 
 <!-- results:begin -->
-### Speed (synthetic inputs)
-
-| operation | measured | design target |
-|---|---:|---|
-| wideband detection, 2M samples | 0.13 s | < 2 s |
-| symbol-rate estimation (cyclic periodogram) | 0.04 s | 1-5 s |
-| demodulation of 106100 symbols | 0.67 s | < 1 s per 100k |
-| GF(2) rank scan L=2..512, 50k bits | 0.68 s | 5-30 s |
-| FEC identification (conv sweep + decode) | 0.73 s | 10-60 s |
-| end-to-end, one clean signal (full stack) | 4.97 s | < 90 s |
-| 1 GB IQ file: load + first waterfall | 0.14 s | < 3 s |
-
-_Source: `results/benchmark.json` (synthetic (dhwani.synth.WaveformFactory)), commit `667e906`, Apple M1 Pro, Python 3.14.8, 2026-10-08T06:32:12Z._
-
-### Modulation ID and demodulation (synthetic)
-
-57 PASS, 10 DEGRADED, 6 FAIL of 73 cases.
-
-
-![Blind modulation ID top-1 accuracy per modulation, CFO 0.004 vs CFO 0](results/charts/modulation_top1.svg)
-
-| modulation | cases | blind top-1 | 95% CI | blind top-2 |
-|---|---:|---:|---:|---:|
-| BPSK | 2 | 50% | - | 100% |
-| BPSK (CFO 0) | 1 | 100% | - | 100% |
-| QPSK | 2 | 100% | - | 100% |
-| QPSK (CFO 0) | 1 | 100% | - | 100% |
-| OQPSK | 2 | 100% | - | 100% |
-| OQPSK (CFO 0) | 1 | 100% | - | 100% |
-| 8PSK | 2 | 100% | - | 100% |
-| 8PSK (CFO 0) | 1 | 100% | - | 100% |
-| 16PSK | 2 | 100% | - | 100% |
-| 16PSK (CFO 0) | 1 | 100% | - | 100% |
-| 32PSK | 2 | 100% | - | 100% |
-| 32PSK (CFO 0) | 1 | 100% | - | 100% |
-| OOK | 2 | 100% | - | 100% |
-| OOK (CFO 0) | 1 | 100% | - | 100% |
-| 4ASK | 2 | 100% | - | 100% |
-| 4ASK (CFO 0) | 1 | 100% | - | 100% |
-| 8ASK | 2 | 100% | - | 100% |
-| 8ASK (CFO 0) | 1 | 100% | - | 100% |
-| 16QAM | 2 | 100% | - | 100% |
-| 16QAM (CFO 0) | 1 | 100% | - | 100% |
-| 32QAM | 2 | 100% | - | 100% |
-| 32QAM (CFO 0) | 1 | 100% | - | 100% |
-| 64QAM | 2 | 100% | - | 100% |
-| 64QAM (CFO 0) | 1 | 100% | - | 100% |
-| 128QAM | 2 | 100% | - | 100% |
-| 128QAM (CFO 0) | 1 | 100% | - | 100% |
-| 256QAM | 2 | 50% | - | 100% |
-| 256QAM (CFO 0) | 1 | 0% | - | 0% |
-| 16APSK | 2 | 100% | - | 100% |
-| 16APSK (CFO 0) | 1 | 100% | - | 100% |
-| 32APSK | 2 | 100% | - | 100% |
-| 32APSK (CFO 0) | 1 | 100% | - | 100% |
-| 64APSK | 2 | 100% | - | 100% |
-| 64APSK (CFO 0) | 1 | 100% | - | 100% |
-| 128APSK | 2 | 100% | - | 100% |
-| 128APSK (CFO 0) | 1 | 100% | - | 100% |
-| 2FSK | 2 | 50% | - | 50% |
-| 2FSK (CFO 0) | 1 | 100% | - | 100% |
-| 2FSK (4 sps) | 1 | 100% | - | 100% |
-| 4FSK | 2 | 100% | - | 100% |
-| 4FSK (CFO 0) | 1 | 100% | - | 100% |
-| 4FSK (4 sps) | 1 | 100% | - | 100% |
-| GMSK | 2 | 50% | - | 50% |
-| GMSK (CFO 0) | 1 | 100% | - | 100% |
-| GMSK (4 sps) | 1 | 100% | - | 100% |
-| OFDM | 2 | 100% | - | 100% |
-| FM | 1 | 0% | - | 0% |
-| AM-DSB-WC | 1 | 0% | - | 0% |
-| AM-DSB-SC | 1 | 0% | - | 0% |
-| AM-SSB-WC | 1 | 0% | - | 0% |
-| AM-SSB-SC | 1 | 0% | - | 0% |
-
-_Source: `results/validation_report.json` (synthetic (dhwani.synth.WaveformFactory)), commit `b5c0379`, Apple M1 Pro, Python 3.14.8, 2026-10-08T01:50:29Z._
-
-### Interleaver and FEC identification (synthetic)
-
-
-![Bit-layer frames recovered per interleaver and FEC family](results/charts/bitlayer_grid.svg)
-
-| interleaver | cases | interleaver ID | FEC ID | CRC pass |
-|---|---:|---:|---:|---:|
-| none | 5 | 100% | 100% | 100% |
-| block | 5 | 20% | 40% | 20% |
-| helical | 5 | 20% | 40% | 20% |
-| convolutional | 5 | 20% | 40% | 20% |
-| pseudo_random | 5 | 20% | 20% | 0% |
-
-| FEC | cases | interleaver ID | FEC ID | CRC pass |
-|---|---:|---:|---:|---:|
-| none | 5 | 20% | 100% | 20% |
-| convolutional | 5 | 100% | 80% | 80% |
-| reed_solomon | 5 | 20% | 20% | 20% |
-| ldpc | 5 | 20% | 20% | 20% |
-| concatenated | 5 | 20% | 20% | 20% |
-
-_Source: `results/bitlayer_report.json` (synthetic (dhwani.synth.WaveformFactory)), commit `b5c0379`, Apple M1 Pro, Python 3.14.8, 2026-10-08T02:02:23Z._
-
-### Decoding proof (synthetic BER + off-air)
-
-80 frames per chain and Eb/N0 point through Dhwani's own S1-S6 receiver; BER over the information bits of locked frames only (a frame S2 does not detect, S6 gates as FAILED or whose sync word is not found is a lock failure, not bit errors).
-
-![Bit error rate and probability of lock versus Eb/N0 per decoding chain, with off-air recordings at their EVM SNR](results/charts/proof.svg)
-
-Off-air markers: the recordings below at their EVM SNR; filled when fully correct, ringed when a CRC-valid frame was decoded.
-
-| chain | code rate | locks ≥ 90% from | BER ≤ 1e-3 from | BER at 10 dB |
-|---|---:|---:|---:|---:|
-| uncoded QPSK | 1 | 7 dB | 7 dB | 2.4e-06 |
-| conv K=7 (171,133), soft Viterbi | 1/2 | 10 dB | 10 dB | < 1.5e-05 (0 errors) |
-| LDPC 802.11n n=648 r1/2, layered | 1/2 | 10 dB | 10 dB | < 1.5e-05 (0 errors) |
-
-_Source: `results/ber_report.json` (synthetic (QPSK frames through Dhwani's S1-S6 receiver, scripts/benchmark_ber.py)), commit `0757a4b`, Intel64 Family 6 Model 170 Stepping 4, GenuineIntel, Python 3.12.8, 2026-10-28T19:15:58Z._
-
-### Headerless sample-rate candidates (synthetic)
-
-True sample rate among the PROBABLE candidates (with a correct symbol rate) in 10 of 10 headerless files; symbol rate right in 10; 4.1 candidates on average; sample rate applied: never.
-
-_Source: `results/samplerate_report.json` (synthetic (dhwani.synth.WaveformFactory)), commit `30ac201`, Apple M1 Pro, Python 3.14.8, 2026-10-08T05:39:49Z._
-
 ### Off-air recordings
 
 10 of 10 recordings fully correct. Off-air set: recordings with source-verified parameters only.
@@ -319,6 +197,24 @@ _Source: `results/samplerate_report.json` (synthetic (dhwani.synth.WaveformFacto
 | [trisat](https://raw.githubusercontent.com/daniestevez/satellite-recordings/master/trisat.wav) | 2FSK 9766 Bd | 2FSK 9766 Bd | - | ✓ | ✓ | ✓ |
 
 _Source: `results/offair_report.json` (off-air (licensed recordings, see cases)), commit `0757a4b`, Intel64 Family 6 Model 170 Stepping 4, GenuineIntel, Python 3.12.8, 2026-10-28T19:07:38Z._
+
+### Decoding proof (synthetic BER + off-air)
+
+80 frames per chain and Eb/N0 point through Dhwani's own S1-S6 receiver; BER over the information bits of locked frames only (a frame S2 does not detect, S6 gates as FAILED or whose sync word is not found is a lock failure, not bit errors).
+
+![Bit error rate and probability of lock versus Eb/N0 per decoding chain, with off-air recordings at their EVM SNR](results/charts/proof.svg)
+
+Off-air markers: the recordings below at their EVM SNR; filled when fully correct, ringed when a CRC-valid frame was decoded.
+
+| chain | code rate | locks ≥ 90% from | BER ≤ 1e-3 from | BER at 10 dB |
+|---|---:|---:|---:|---:|
+| uncoded QPSK | 1 | 7 dB | 7 dB | 2.4e-06 |
+| conv K=7 (171,133), soft Viterbi | 1/2 | 10 dB | 10 dB | < 1.5e-05 (0 errors) |
+| LDPC 802.11n n=648 r1/2, layered | 1/2 | 10 dB | 10 dB | < 1.5e-05 (0 errors) |
+
+_Source: `results/ber_report.json` (synthetic (QPSK frames through Dhwani's S1-S6 receiver, scripts/benchmark_ber.py)), commit `0757a4b`, Intel64 Family 6 Model 170 Stepping 4, GenuineIntel, Python 3.12.8, 2026-10-28T19:15:58Z._
+
+Synthetic-signal validation (simulator, not off-air) is in `results/*.json`.
 <!-- results:end -->
 
 ## Supported modulations (S6 demodulation)

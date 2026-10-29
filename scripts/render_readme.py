@@ -144,7 +144,12 @@ def render() -> str:
     else:
         out.append("_Measured on synthetic recordings; to score real "
                    "captures run `python scripts/validate_offair.py`._")
-    return "\n".join(out)
+    # Real recordings first; synthetic sections follow, folded and labelled.
+    secs = ("\n".join(out)).split("### ")[1:]
+    by = {x.split("\n", 1)[0]: "### " + x.rstrip() for x in secs}
+    real = [by.pop("Off-air recordings"), by.pop("Decoding proof (synthetic BER + off-air)")]
+    return ("\n\n".join(real) + "\n\nSynthetic-signal validation (simulator, "
+            "not off-air) is in `results/*.json`.")
 
 
 LOCK_LEVEL = 0.9        # "locks from": the lowest Eb/N0 with p_lock >= this
