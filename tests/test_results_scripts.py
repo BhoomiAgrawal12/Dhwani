@@ -85,14 +85,11 @@ def test_readme_block_renders_from_results(tmp_path, monkeypatch):
     monkeypatch.setattr(rr, "README", str(readme))
     assert rr.main([]) == 0 and rr.main(["--check"]) == 0
     assert "Not generated yet" in readme.read_text()
-    prov = {"data": "synthetic", "git_commit": "abc", "cpu": "cpu",
-            "python": "3", "generated_utc": "t"}
-    (tmp_path / "results" / "benchmark.json").write_text(json.dumps(
-        {"provenance": prov, "timings": [
-            {"operation": "op", "seconds": 1.234, "target": "< 2 s"}]}))
+    (tmp_path / "results" / "ber_report.json").write_text(
+        json.dumps(_ber_report_fixture()))
     assert rr.main(["--check"]) == 1
     rr.main([])
-    assert "| op | 1.23 s | < 2 s |" in readme.read_text()
+    assert "| uncoded QPSK |" in readme.read_text()
 
 
 def test_analog_verdict_counts_classification():
@@ -436,14 +433,13 @@ def test_proof_chart_from_result_files(tmp_path, monkeypatch):
 
 
 def test_readme_renders_decoding_proof_section(tmp_path, monkeypatch):
-    """Proof Chart in the README: its own section after the bit-layer one,
+    """Proof Chart in the README: its own section after the off-air one,
     numbers only from ber_report.json, 'Not generated yet' without it."""
     import render_readme as rr
     (tmp_path / "results" / "charts").mkdir(parents=True)
     monkeypatch.setattr(rr, "ROOT", str(tmp_path))
     text = rr.render()
-    assert (text.index("### Interleaver and FEC") <
-            text.index("### Decoding proof") < text.index("### Headerless"))
+    assert text.index("### Off-air") < text.index("### Decoding proof")
     section = text.split("### Decoding proof")[1].split("\n### ")[0]
     assert "Not generated yet: run `python scripts/benchmark_ber.py`" in section
     (tmp_path / "results" / "ber_report.json").write_text(
